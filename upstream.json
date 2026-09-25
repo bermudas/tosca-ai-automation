@@ -1,0 +1,225 @@
+{
+  "$comment": "Vendored upstream sources. scripts/sync_upstream.py does a 3-way merge (base = locked commit, ours = this repo, theirs = new upstream). 'rewrite' rules are applied to base and theirs before merging, so our path adaptations also apply to new upstream text. 'watch' files are not vendored. Their upstream changes are only reported and must be merged by hand.",
+  "sources": {
+    "tricentis-mcp-skills": {
+      "repo": "https://github.com/Tricentis/mcp-skills.git",
+      "ref": "main",
+      "map": [
+        {
+          "src": "Tosca/Commander/MCP/claude/skills/commander-mcp",
+          "dest": ".claude/skills/commander-mcp"
+        },
+        {
+          "src": "Tosca/Commander/CLI/claude/skills/cli-api-commander",
+          "dest": ".claude/skills/cli-api-commander"
+        },
+        {
+          "src": "Tosca/Commander/CLI/vscode/instructions/cli-api-commander.instructions.md",
+          "dest": ".github/instructions/cli-api-commander.instructions.md"
+        },
+        {
+          "src": "Tosca/Commander/CLI/Get-CommanderAutomationPaths.ps1",
+          "dest": "tools/tosca-commander-cli/scripts/Get-CommanderAutomationPaths.ps1"
+        },
+        {
+          "src": "Tosca/Commander/CLI/Get-CommanderAutomationPaths.py",
+          "dest": "tools/tosca-commander-cli/scripts/Get-CommanderAutomationPaths.py"
+        },
+        {
+          "src": "Tosca/Commander/CLI/Get-TcApiRuntime.ps1",
+          "dest": "tools/tosca-commander-cli/scripts/Get-TcApiRuntime.ps1"
+        },
+        {
+          "src": "Tosca/Commander/CLI/Invoke-TcApi.ps1",
+          "dest": "tools/tosca-commander-cli/scripts/Invoke-TcApi.ps1"
+        },
+        {
+          "src": "Tosca/Commander/CLI/lib",
+          "dest": "tools/tosca-commander-cli/scripts/lib"
+        },
+        {
+          "src": "Tosca/Commander/CLI/commander-versions.json",
+          "dest": "tools/tosca-commander-cli/commander-versions.json"
+        },
+        {
+          "src": "Tosca/Commander/CLI/tcapi-compatibility.json",
+          "dest": "tools/tosca-commander-cli/tcapi-compatibility.json"
+        },
+        {
+          "src": "Tosca/Commander/CLI/LICENSE",
+          "dest": "tools/tosca-commander-cli/LICENSE"
+        },
+        {
+          "src_children": "Tosca/Cloud/CLI/claude/skills",
+          "dest_parent": ".claude/skills"
+        },
+        {
+          "src": "Tosca/Cloud/CLI/verify_toscactl.py",
+          "dest": "tools/tosca-cloud-cli/verify_toscactl.py"
+        },
+        {
+          "src": "Tosca/Cloud/CLI/Get-TnCloudPaths.py",
+          "dest": "tools/tosca-cloud-cli/Get-TnCloudPaths.py"
+        },
+        {
+          "src": "Tosca/Cloud/CLI/configure_tn_connection.py",
+          "dest": "tools/tosca-cloud-cli/configure_tn_connection.py"
+        },
+        {
+          "src": "Tosca/Cloud/CLI/lib/tenant_url.py",
+          "dest": "tools/tosca-cloud-cli/lib/tenant_url.py"
+        },
+        {
+          "src": "Tosca/Cloud/CLI/LICENSE",
+          "dest": "tools/tosca-cloud-cli/LICENSE"
+        }
+      ],
+      "rewrite": [
+        {
+          "dest_glob": ".claude/skills/commander-mcp/**",
+          "find": "\\.\\./\\.\\./\\.\\./\\.\\./CLI/claude/skills/cli-api-commander/",
+          "replace": "../cli-api-commander/"
+        },
+        {
+          "dest_glob": ".claude/skills/commander-mcp/**",
+          "find": "\\]\\(\\.\\./\\.\\./\\.\\./\\.\\./CLI/README\\.md\\)",
+          "replace": "](../cli-api-commander/SKILL.md)"
+        },
+        {
+          "dest_glob": ".claude/skills/tosca-*/**",
+          "find": "(python3? )?(\\./)?verify_toscactl\\.py",
+          "replace": "python3 tools/tosca-cloud-cli/verify_toscactl.py"
+        },
+        {
+          "dest_glob": ".claude/skills/tosca-*/**",
+          "find": "(python3? )?(\\./)?Get-TnCloudPaths\\.py",
+          "replace": "python3 tools/tosca-cloud-cli/Get-TnCloudPaths.py"
+        },
+        {
+          "dest_glob": ".claude/skills/tosca-*/**",
+          "find": "(python3? )?(\\./)?configure_tn_connection\\.py",
+          "replace": "python3 tools/tosca-cloud-cli/configure_tn_connection.py"
+        },
+        {
+          "dest_glob": ".claude/skills/tosca*/**",
+          "find": "\\]\\(\\.\\./\\.\\./\\.\\./\\.\\./\\.\\./Commander/CLI/README\\.md\\)",
+          "replace": "](../cli-api-commander/SKILL.md)"
+        },
+        {
+          "dest_glob": ".claude/skills/tosca*/**",
+          "find": "\\.\\./\\.\\./\\.\\./\\.\\./\\.\\./Commander/CLI/README\\.md",
+          "replace": "../cli-api-commander/SKILL.md"
+        },
+        {
+          "dest_glob": ".claude/skills/tosca*/**",
+          "find": "\\]\\(\\.\\./\\.\\./\\.\\./\\.\\./MCP/README\\.md\\)",
+          "replace": "](https://github.com/Tricentis/mcp-skills/blob/main/Tosca/Cloud/MCP/README.md)"
+        }
+      ],
+      "watch": [
+        "Tosca/Commander/MCP/vscode/AGENTS.md.fragment",
+        "Tosca/Commander/MCP/vscode/copilot-instructions.md.fragment",
+        "Tosca/Commander/MCP/vscode/instructions/commander-mcp.instructions.md",
+        "Tosca/Commander/CLI/AGENTS.md.fragment",
+        "Tosca/Commander/CLI/vscode/copilot-instructions.md.fragment",
+        "Tosca/Commander/CLI/vscode/settings.json.example",
+        "Tosca/Commander/CLI/claude/rules/cli-api-commander.md",
+        "Tosca/Commander/MCP/README.md",
+        "Tosca/Commander/CLI/README.md",
+        "Tosca/Cloud/CLI/AGENTS.md.fragment",
+        "Tosca/Cloud/CLI/vscode/copilot-instructions.md.fragment",
+        "Tosca/Cloud/CLI/claude/rules/tosca-cloud.md",
+        "Tosca/Cloud/CLI/START-HERE.md",
+        "Tosca/Cloud/MCP/README.md"
+      ],
+      "watch_new_dirs": [
+        "Tosca"
+      ]
+    },
+    "bermudas-toscacloud-cli": {
+      "repo": "https://github.com/bermudas/toscacloud_cli.git",
+      "ref": "main",
+      "map": [
+        {
+          "src": ".claude/skills/tosca-automation",
+          "dest": ".claude/skills/toscacloud-cli"
+        },
+        {
+          "src": ".claude/skills/browser-verify",
+          "dest": ".claude/skills/browser-verify"
+        },
+        {
+          "src": "tosca_cli.py",
+          "dest": "tools/toscacloud-cli/tosca_cli.py"
+        },
+        {
+          "src": "requirements.txt",
+          "dest": "tools/toscacloud-cli/requirements.txt"
+        },
+        {
+          "src": ".env.example",
+          "dest": "tools/toscacloud-cli/.env.example"
+        },
+        {
+          "src": "LICENSE",
+          "dest": "tools/toscacloud-cli/LICENSE"
+        },
+        {
+          "src": "README.md",
+          "dest": "tools/toscacloud-cli/README.md"
+        }
+      ],
+      "rewrite": [
+        {
+          "dest_glob": ".claude/skills/toscacloud-cli/**",
+          "find": "python tosca_cli\\.py",
+          "replace": "python tools/toscacloud-cli/tosca_cli.py"
+        },
+        {
+          "dest_glob": ".claude/skills/toscacloud-cli/**",
+          "find": "\\.claude/skills/tosca-automation/",
+          "replace": ".claude/skills/toscacloud-cli/"
+        },
+        {
+          "dest_glob": ".claude/skills/toscacloud-cli/**",
+          "find": "source \\.venv/bin/activate",
+          "replace": "source tools/toscacloud-cli/.venv/bin/activate"
+        },
+        {
+          "dest_glob": ".claude/skills/toscacloud-cli/**",
+          "find": "([ \"])/tmp/([a-zA-Z_.-]+\\.(json|py))",
+          "replace": "\\1.claude/tmp/\\2"
+        },
+        {
+          "dest_glob": "tools/toscacloud-cli/README.md",
+          "find": "python tosca_cli\\.py",
+          "replace": "python tools/toscacloud-cli/tosca_cli.py"
+        }
+      ],
+      "watch": [
+        ".github/agents/tosca.agent.md",
+        ".claude/agents/tosca.md",
+        "CLAUDE.md",
+        "AGENTS.md",
+        ".github/copilot-instructions.md",
+        ".mcp.json",
+        ".vscode/mcp.json"
+      ],
+      "watch_new_dirs": [
+        ".claude/skills",
+        ".claude/agents",
+        ".github/agents"
+      ]
+    },
+    "bermudas-toscatsu": {
+      "repo": "https://github.com/bermudas/ToscaTSU.git",
+      "ref": "main",
+      "map": [],
+      "$comment": "Not vendored: .claude/skills/tosca-tsu is our own read-only adaptation of the approach. Watch the parser for format discoveries (new object classes, ActionMode codes, blob encodings) and port them by hand.",
+      "watch": [],
+      "watch_new_dirs": [
+        "."
+      ]
+    }
+  }
+}

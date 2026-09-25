@@ -1,0 +1,4 @@
+{
+  "enabledMcpjsonServers": ["tosca-commander", "playwright", "sap-gui"],
+  "disabledMcpjsonServers": ["ToscaCloudMcpServer"]
+}

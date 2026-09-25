@@ -1,0 +1,27 @@
+# Secrets and tokens
+.env
+tools/toscacloud-cli/.env
+tools/toscacloud-cli/token.json
+
+# Python
+.venv/
+tools/*/.venv/
+__pycache__/
+*.pyc
+
+# Agent scratch space
+.claude/tmp/
+.claude/settings.local.json
+.playwright-mcp/
+
+.DS_Store
+
+# Upstream sync cache
+.cache/
+
+# Tosca subset exports (may contain customer data)
+*.tsu
+
+# Personal MCP configs (create from the .example files)
+.mcp.json
+.vscode/mcp.json

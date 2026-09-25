@@ -1,0 +1,17 @@
+{
+  "tricentis-mcp-skills": {
+    "commit": "74397c55e980d59ed0a298785551bab8e63976db",
+    "date": "2026-07-30T17:08:48-05:00",
+    "synced": "2026-09-25"
+  },
+  "bermudas-toscacloud-cli": {
+    "commit": "0a1fd8e2c2dfe39095407564a76325d3f7a41b21",
+    "date": "2026-07-22T11:29:15+03:00",
+    "synced": "2026-09-25"
+  },
+  "bermudas-toscatsu": {
+    "commit": "338f4dd062f0bccf41e940dacc0b4ae4556a1a61",
+    "date": "2026-05-01T12:32:47+04:00",
+    "synced": "2026-09-25"
+  }
+}

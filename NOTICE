@@ -1,0 +1,27 @@
+tosca-ai-automation
+Copyright (c) 2026 Alexander Bychinskiy. Licensed under the MIT License (see LICENSE),
+except for the third-party components listed below, which keep their own licenses.
+
+Third-party components
+----------------------
+
+Tricentis/mcp-skills (https://github.com/Tricentis/mcp-skills)
+  Licensed under the Apache License, Version 2.0. Modified: paths and links adapted to this
+  repository, plus the "Fallback tiers" section in .claude/skills/tosca-cloud/runtime-routing.md.
+  - .claude/skills/commander-mcp/            (Tosca/Commander/MCP)
+  - .claude/skills/cli-api-commander/        (Tosca/Commander/CLI)
+  - .github/instructions/cli-api-commander.instructions.md
+  - tools/tosca-commander-cli/               (Tosca/Commander/CLI helper scripts)
+  - .claude/skills/tosca-cloud*/, tosca-*/ journey and command skills, toscactl-reference/ (Tosca/Cloud/CLI)
+  - tools/tosca-cloud-cli/                   (Tosca/Cloud/CLI helper scripts)
+  License texts: the LICENSE files inside those folders.
+  Tricentis and Tosca are trademarks of Tricentis. This project is not affiliated with or endorsed by Tricentis.
+
+bermudas/toscacloud_cli (https://github.com/bermudas/toscacloud_cli), MIT
+  - .claude/skills/toscacloud-cli/ (renamed from tosca-automation), .claude/skills/browser-verify/
+  - tools/toscacloud-cli/
+
+bermudas/ToscaTSU (https://github.com/bermudas/ToscaTSU), MIT
+  - approach adapted in .claude/skills/tosca-tsu/
+
+Upstream versions are pinned in upstream.lock.json.

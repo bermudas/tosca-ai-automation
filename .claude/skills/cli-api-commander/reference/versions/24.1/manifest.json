@@ -1,0 +1,11 @@
+{
+  "commanderVersion": "24.1",
+  "commanderLabel": "Tosca Commander 24.1",
+  "commanderDirectory": "Tricentis.ToscaCommander.241",
+  "sources": {
+    "readme": "commander/TCCore/TCShell/TCShell_Readme.txt",
+    "interpreter": "TCShell CLI (supported Commander releases)",
+    "sampleCount": 23,
+    "verifiedOutputCount": 0
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "commanderVersion": "master",
+  "commanderLabel": "Tosca Commander master (development)",
+  "commanderDirectory": "Tricentis.ToscaCommander",
+  "sources": {
+    "readme": "commander/TCCore/TCShell/TCShell_Readme.txt",
+    "interpreter": "TCShell CLI (supported Commander releases)",
+    "sampleCount": 23,
+    "verifiedOutputCount": 30
+  }
+}
