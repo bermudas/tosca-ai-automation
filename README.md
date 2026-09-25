@@ -45,6 +45,10 @@ Skills and agents live once, in `.claude/`. Claude Code and VS Code Copilot both
 
 Reuse existing tests and modules before building (also across Commander ↔ Cloud). Explore live only what's missing, and prove every locator unique. Build one artifact at a time. Confirm every write landed. **Never mask a defect** to get a green run. Keep the user's navigation flow. Ask before irreversible actions. Never echo or commit secrets.
 
+## Project memory
+
+Agents keep shared know-how in [`.agents/`](.agents/README.md): project setup (`project.md`, from `project.example.md`), per-application knowledge (`apps/`) and reusable patterns (`patterns/`). Plain Markdown, read and updated by both Claude and Copilot. Only the templates are committed; everything agents or users create in `.agents/` is gitignored so project data stays private. In a private project repo you can un-ignore it to share with the team.
+
 ## Keeping upstream content current
 
 Vendored content is pinned in `upstream.lock.json`. Ask your assistant to *"update the Tricentis skills"*, or run:

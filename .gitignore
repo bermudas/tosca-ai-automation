@@ -25,3 +25,7 @@ __pycache__/
 # Personal MCP configs (create from the .example files)
 .mcp.json
 .vscode/mcp.json
+
+# Project-specific agent memory (commit these in a private project repo)
+.agents/project.md
+.agents/apps/

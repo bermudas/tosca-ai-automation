@@ -2,6 +2,8 @@
 
 Follow **`AGENTS.md`** at the repo root. It indexes the agents, skills, MCP servers, routing and guardrails. Skills and agents are in `.claude/skills/` and `.claude/agents/`; VS Code loads both folders natively. File-scoped rules: `.github/instructions/*.instructions.md`.
 
+Project memory lives in `.agents/` (read `project.md`, `apps/<app>.md` and `patterns/` at task start; update after verified findings). Use it instead of Copilot's private memory for anything the team should know.
+
 Copilot-specific notes:
 
 - **Agents**: pick `tosca-automation-engineer` or `tosca-scenario-explorer` in the Chat agent picker.

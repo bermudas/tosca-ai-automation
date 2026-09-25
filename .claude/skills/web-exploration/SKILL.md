@@ -49,4 +49,6 @@ Url: https://shop.example.com/login* | Title: Login – Example Shop
 | 3 | Account link | Tag=A, InnerText=*@*.* | 1 ✓ | — | Visible=True |
 ```
 
+Known traps and proven patterns (consent banners, duplicate nav labels, hover-only menus, relative href, line-broken headings, breakpoints, bot protection): [references/web-patterns.md](references/web-patterns.md).
+
 Hand the inventory to the builder (`commander-mcp` for Commander; `tosca-authoring-automated-testcase` / `toscacloud-cli` for Cloud). Module JSON details, action modes, the 4-folder case layout and debugging for the Html engine: `toscacloud-cli` → [web-automation.md](../toscacloud-cli/references/web-automation.md) and [best-practices.md](../toscacloud-cli/references/best-practices.md). The TechnicalId concepts are the same in Commander XModules.

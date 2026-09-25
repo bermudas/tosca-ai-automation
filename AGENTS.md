@@ -16,6 +16,7 @@ Skills, agents and MCP servers for automating **Tricentis Tosca Commander** (on-
 | Area | Skills |
 |------|--------|
 | Routing & concepts | `tosca-platform-guide` |
+| Project memory | `tosca-project-memory` (onboard the user's setup, learn conventions from existing assets, capture expert patterns into `.agents/`) |
 | Exploration | `web-exploration` (Playwright MCP), `browser-verify` (CDP deep checks), `sap-gui-exploration` (SAP GUI MCP + server options) |
 | Commander, open (MCP) | `commander-mcp` |
 | Commander, headless (TCShell / TCAPI / Remote Control) | `cli-api-commander` |
@@ -40,6 +41,14 @@ Templates: `.mcp.json.example` (Claude) and `.vscode/mcp.json.example` (Copilot)
 **Commander**: Commander open → `commander-mcp`. Closed, CI or batch → `cli-api-commander` (TCShell → TCAPI → Remote Control last). Helper scripts: `tools/tosca-commander-cli/scripts/` (e.g. `Get-CommanderAutomationPaths.ps1` / `python3 tools/tosca-commander-cli/scripts/Get-CommanderAutomationPaths.py`; Remote Control client `tools/tosca-commander-cli/scripts/lib/TcShellRemoteControl.ps1`). Batch mode: always `save` before exit. Data Integrity only via MCP.
 
 **Cloud**: official first. **toscactl** (default) → **tn** (gaps: Builder, DI, mobile, loop) → **Tosca Cloud MCP** (personal Local Runner runs, failed-step trees) → **`tosca_cli.py`** (fallback: raw MBT JSON, blocks/ULIDs, TSU, Inventory moves). Checks: `python3 tools/tosca-cloud-cli/verify_toscactl.py`, `python3 tools/tosca-cloud-cli/Get-TnCloudPaths.py`. Say which tier you used and why you escalated.
+
+## Project memory (`.agents/`)
+
+Shared, tool-neutral memory in plain Markdown. Conventions: `.agents/README.md`.
+
+- **Read at task start**: `.agents/project.md` (setup: platform, tenant/workspace, folders, agents, naming, preferences), `.agents/apps/<app>.md` for the app in scope, and the fitting `.agents/patterns/*.md`. Treat them as hints and re-verify anything that can go stale.
+- **Write after the task**, verified facts only: setup the user gave you → `project.md`; app locators, quirks and known defects → `apps/<app>.md`; generic proven patterns → `patterns/`. Tosca-product knowledge goes into the skills instead. **Never store secrets.** Mention what you updated in your report.
+- Filling it: `tosca-project-memory` skill. **Onboard** on first contact (no `project.md`), **learn** conventions from existing test cases/modules (read-only, counted n/N), **remember** expert hints the user shares. Label every entry: `Source: user | observed n/N | verified <date> | inferred`. User-stated rules win; conflicts go to the user.
 
 ## Guardrails (all platforms)
 

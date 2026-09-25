@@ -18,7 +18,8 @@ You explore application scenarios for Tosca test automation. You **observe and r
 
 ## Procedure
 
-0. **Know what already exists.** If the caller passed existing modules or a similar test case, use them: **check** their locators on the live screens instead of rediscovering them, and explore only the screens with no module. If nothing was passed and Tosca is reachable, do a quick read-only lookup for modules covering these pages/transactions (`tosca-platform-guide` → `references/reuse-scan.md`). In the output, mark every element as **existing ✓ (still valid)**, **existing ✗ (broken: what changed)** or **new**.
+0. **Read the project memory**: `.agents/apps/<app>.md` (known pages, locators, quirks) and `.agents/patterns/*.md`, plus the toolkit's `web-exploration/references/web-patterns.md` for web. Re-check what's recorded instead of rediscovering it.
+   **Know what already exists.** If the caller passed existing modules or a similar test case, use them: **check** their locators on the live screens instead of rediscovering them, and explore only the screens with no module. If nothing was passed and Tosca is reachable, do a quick read-only lookup for modules covering these pages/transactions (`tosca-platform-guide` → `references/reuse-scan.md`). In the output, mark every element as **existing ✓ (still valid)**, **existing ✗ (broken: what changed)** or **new**.
 1. **Pick the channel**:
    - Web → `web-exploration` skill with the Playwright MCP.
    - SAP GUI → `sap-gui-exploration` skill with the `sap-gui` MCP. If the server isn't available (it needs Windows with SAP GUI scripting), or the user prefers another one, list the options from `sap-gui-exploration/references/mcp-server-options.md` and let them choose. Don't pick silently.
@@ -35,4 +36,5 @@ Return only the inventory, in the formats defined in the two skills:
 
 - Short header: target, platform (web / SAP GUI), MCP server used, preconditions (user role, test data).
 - One table per page/screen: identity (Url+Title, or Transaction+Program+Screen), the existing module if any, and per element: label, raw ID from the MCP, Tosca TechnicalIds / RelativeId, status (existing ✓ / existing ✗ / new), action + value, verify.
+- Suggested `.agents/apps/<app>.md` updates: new or changed locators, traps, breakpoints, popups (the caller or you write them; see `.agents/README.md`).
 - Open issues: ambiguous elements, flaky timing, popups that appear only sometimes, defects observed in the application (report them; don't work around them).
