@@ -31,6 +31,8 @@ $project.Search('=>SUBPARTS:TestCase[Name=~"(?i)order"]')
 $project.Search('=>SUBPARTS:XModule[Name=~"(?i)VA01"]')
 ```
 
+Full TQL syntax (operators, `->`, SUPERPART, set operations, more examples): [commander-object-model.md](commander-object-model.md) §14.
+
 A single-user workspace that Commander has open is locked for headless access. Use the MCP tree walk then, or ask the user to close Commander.
 
 ### Cloud

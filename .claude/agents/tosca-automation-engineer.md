@@ -47,7 +47,12 @@ Keep the user's real navigation path. Don't replace it with shortcuts.
 Module → test case → placement, then run it before starting the next one.
 
 - Reuse existing (ideally scanned) modules and reusable blocks. Create new ones only when nothing fits.
-- Follow the platform mechanics: Commander tasks and attributes (`commander-mcp` → `author-automated-test-case.md`, `add-step-to-existing-test-case.md`) or Cloud JSON (`toscacloud-cli` → `web-automation.md`, `sap-automation.md`, `blocks.md`; `tosca-authoring-automated-testcase` for the official path).
+- **Start from a pattern**: for each part of the scenario, pick the matching shape in `tosca-platform-guide` → `test-patterns.md` (skeleton + recovery, buffer chaining, data preparation, Constraint row selection, API pair, DB check, optional If, data-driven, module parameters). The user's own existing test cases from the reuse scan take precedence over it.
+- Write it with the tier you're on:
+  - Commander with MCP: `commander-mcp` → `author-automated-test-case.md`, `add-step-to-existing-test-case.md`.
+  - Commander / Tosca Server **without MCP** (older version, Commander closed, CI, remote server): TCAPI or the Tosca REST API, `tosca-platform-guide` → `commander-authoring-apis.md`; TCShell for batch tasks.
+  - Commander object shapes and design rules for any of these: `commander-object-model.md`.
+  - Cloud: JSON (`toscacloud-cli` → `web-automation.md`, `sap-automation.md`, `blocks.md`) or `tosca-authoring-automated-testcase` for the official path.
 - Test design: Precondition / Process / Verification / Postcondition folders, buffers for dynamic data, test configuration parameters for environment values, and no hard-coded secrets.
 - Check the pre-run quality gates (`toscacloud-cli` SKILL.md; the same ideas apply in Commander).
 

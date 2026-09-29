@@ -15,14 +15,14 @@ Skills, agents and MCP servers for automating **Tricentis Tosca Commander** (on-
 
 | Area | Skills |
 |------|--------|
-| Routing & concepts | `tosca-platform-guide` |
+| Routing & concepts | `tosca-platform-guide` (incl. `test-patterns.md`: build patterns for both platforms; `commander-object-model.md`: Commander object shapes + official design rules; `commander-authoring-apis.md`: TCAPI / REST authoring when MCP isn't available) |
 | Project memory | `tosca-project-memory` (onboard the user's setup, learn conventions from existing assets, capture expert patterns into `.agents/`) |
 | Exploration | `web-exploration` (Playwright MCP), `browser-verify` (CDP deep checks), `sap-gui-exploration` (SAP GUI MCP + server options) |
 | Commander, open (MCP) | `commander-mcp` |
 | Commander, headless (TCShell / TCAPI / Remote Control) | `cli-api-commander` |
 | Cloud, official (toscactl default, tn for gaps) | `tosca-cloud`, `tosca-cloud-basics`, `tosca-cloud-connect`, `toscactl-reference`, journeys: `tosca-analyzing-execution-results`, `tosca-analyzing-execution-history`, `tosca-remediating-from-results`, `tosca-authoring-automated-testcase`, `tosca-authoring-manual-testcase`, `tosca-explaining-testcase`; commands: `tosca-find`, `tosca-run`, `tosca-status`, `tosca-execution`, `tosca-agents`, `tosca-datasets`, `tosca-import-dataset`, `tosca-export-dataset`, `tosca-create-playlist`, `tosca-delete-playlist`, `tosca-create-workspace`, `tosca-delete-workspace`, `tosca-login`, `tosca-setup` |
 | Cloud, fallback + JSON model reference | `toscacloud-cli` (`tools/toscacloud-cli/tosca_cli.py`) |
-| Subset files (.tsu), both platforms, read-only | `tosca-tsu` (`scripts/tsu_inspect.py`: summary, step trees, modules/locators, diff) |
+| Subset files (.tsu), both platforms, read-only | `tosca-tsu` (`scripts/tsu_inspect.py`: summary, step trees, modules/locators, diff; `references/tsu-evidence.md`: entity detail + enum codes from real exports) |
 | Maintenance | `update-upstream-skills`: pull updates from Tricentis/mcp-skills and bermudas/toscacloud_cli with a 3-way merge (`upstream.json`, `scripts/sync_upstream.py`) |
 
 ## MCP servers
@@ -38,7 +38,7 @@ Templates: `.mcp.json.example` (Claude) and `.vscode/mcp.json.example` (Copilot)
 
 ## Routing, in short
 
-**Commander**: Commander open → `commander-mcp`. Closed, CI or batch → `cli-api-commander` (TCShell → TCAPI → Remote Control last). Helper scripts: `tools/tosca-commander-cli/scripts/` (e.g. `Get-CommanderAutomationPaths.ps1` / `python3 tools/tosca-commander-cli/scripts/Get-CommanderAutomationPaths.py`; Remote Control client `tools/tosca-commander-cli/scripts/lib/TcShellRemoteControl.ps1`). Batch mode: always `save` before exit. Data Integrity only via MCP.
+**Commander**: Commander open → `commander-mcp`. Closed, CI, batch, or a Tosca Server version without MCP → `cli-api-commander` (TCShell → TCAPI → Remote Control last) and the Tosca REST API; authoring recipes for TCAPI/REST: `tosca-platform-guide` → `commander-authoring-apis.md`. Helper scripts: `tools/tosca-commander-cli/scripts/` (e.g. `Get-CommanderAutomationPaths.ps1` / `python3 tools/tosca-commander-cli/scripts/Get-CommanderAutomationPaths.py`; Remote Control client `tools/tosca-commander-cli/scripts/lib/TcShellRemoteControl.ps1`). Batch mode: always `save` before exit. Data Integrity only via MCP.
 
 **Cloud**: official first. **toscactl** (default) → **tn** (gaps: Builder, DI, mobile, loop) → **Tosca Cloud MCP** (personal Local Runner runs, failed-step trees) → **`tosca_cli.py`** (fallback: raw MBT JSON, blocks/ULIDs, TSU, Inventory moves). Checks: `python3 tools/tosca-cloud-cli/verify_toscactl.py`, `python3 tools/tosca-cloud-cli/Get-TnCloudPaths.py`. Say which tier you used and why you escalated.
 

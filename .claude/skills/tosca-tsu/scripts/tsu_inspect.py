@@ -17,8 +17,8 @@ import sys, gzip, json, base64, re, collections, signal
 if hasattr(signal, 'SIGPIPE'):
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)  # allow piping into head/less
 
-# ActionMode bitflags, inferred from samples (verify against TCAPI before relying on 1/515/517)
-MODES = {'37': 'Input', '69': 'Verify', '101': 'WaitOn', '165': 'Buffer', '517': 'Select', '515': 'Insert', '1': 'Select(nav)'}
+# ActionMode bitflags, from samples (see SKILL.md for confidence; 1 is a container pass-through)
+MODES = {'37': 'Input', '69': 'Verify', '101': 'WaitOn', '165': 'Buffer', '517': 'Select', '515': 'Insert', '519': 'Constraint', '1': 'Select(nav)'}
 
 def load(p):
     with open(p, 'rb') as f:
@@ -48,7 +48,7 @@ def main():
     def fpath(e):
         parts = []
         while True:
-            p = R(e, 'ParentFolder')
+            p = R(e, 'ParentFolder') or R(e, 'Library') or R(e, 'OwnedScenarioCollection')  # blocks / recovery scenarios
             if not p: break
             e = p[0]; parts.append(name(e))
         return '/'.join(reversed(parts))
@@ -95,11 +95,11 @@ def main():
         print('origin guess:', origin, '| entities:', len(E))
         print('classes:', dict(collections.Counter(e['ObjectClass'] for e in E).most_common()))
         for e in E:
-            if e['ObjectClass'] in ('TestCase', 'ReuseableTestStepBlock', 'XModule', 'ExecutionList'):
+            if e['ObjectClass'] in ('TestCase', 'ReuseableTestStepBlock', 'RecoveryScenario', 'XModule', 'ApiModule', 'ExecutionList'):
                 print(f"  {e['ObjectClass']:24} {e['Surrogate']}  {fpath(e)}/{name(e)}")
     elif cmd == 'tree':
         for e in E:
-            if e['ObjectClass'] in ('TestCase', 'ReuseableTestStepBlock') and (not rest or rest[0].lower() in name(e).lower()):
+            if e['ObjectClass'] in ('TestCase', 'ReuseableTestStepBlock', 'RecoveryScenario') and (not rest or rest[0].lower() in name(e).lower()):
                 print(f"\n=== {e['ObjectClass']} {fpath(e)}/{name(e)}" + ('' if noids else f"  [{e['Surrogate']}]"))
                 if A(e, 'TestConfigurationParameters'):
                     print('TCPs:', re.findall(r'Name="([^"]+)" Value="([^"]*)"', blob(A(e, 'TestConfigurationParameters'))))
@@ -112,6 +112,9 @@ def main():
                 print(f"{ind}- {name(a)!r} {A(a,'BusinessType')} {ps}")
                 for c in R(a, 'Attributes'): attr(c, ind + '  ')
             print('  params:', {name(p): A(p, 'Value') for p in R(m, 'Properties') if name(p) != 'SelfHealingData'})
+            if m['ObjectClass'] == 'ApiModule' and A(m, 'TCProperties'):  # request/response metadata lives in the blob
+                print('  api:', {k: v for k, v in re.findall(r'Name="([^"]+)" Value="([^"]*)"', blob(A(m, 'TCProperties')))
+                                 if k in ('IsRequest', 'Method', 'Resource', 'StatusCode', 'CorrelationId')})
             for a in R(m, 'Attributes'): attr(a, '  ')
     elif cmd == 'entity':
         if not rest or rest[0] not in ents:

@@ -20,9 +20,9 @@ A `.tsu` is the same format on both platforms: a **gzip stream of UTF-8 JSON** h
 
 ```bash
 S=.claude/skills/tosca-tsu/scripts/tsu_inspect.py
-python3 $S export.tsu summary              # origin guess (Commander/Cloud), class counts, test cases / blocks / modules with folder paths
-python3 $S export.tsu tree ["name part"]   # step tree per TestCase / reusable block (add --expand to inline blocks)
-python3 $S export.tsu modules              # modules -> attribute tree -> locator params (Tag, Id, InnerText, RelativeId, …)
+python3 $S export.tsu summary              # origin guess (Commander/Cloud), class counts, test cases / blocks / recovery scenarios / (Api)modules / execution lists with folder paths
+python3 $S export.tsu tree ["name part"]   # step tree per TestCase / reusable block / recovery scenario (add --expand to inline blocks)
+python3 $S export.tsu modules              # modules -> attribute tree -> locator params (Tag, Id, InnerText, RelativeId, …); ApiModules also 'api:' Method/Resource/StatusCode
 python3 $S export.tsu entity <surrogate>   # one raw entity, nested H4sI blobs decoded
 python3 $S export.tsu dump out.json        # pretty JSON with screenshots stripped (diffable, greppable)
 ```
@@ -34,6 +34,8 @@ diff <(python3 $S commander.tsu tree "Login" --no-ids) <(python3 $S cloud.tsu tr
 ```
 
 Stdlib only; screenshots (`FileContent.Data`) are skipped by every command except `entity`. Exports can be tens of MB, so prefer `summary` / `tree NAME` over dumping everything into the context.
+
+Entity-level detail from real exports (API module blobs, Constraint / Select / container codes, Set Buffer, If folders, DB Expert, TDS, recovery scenarios, Html / Vision AI params, execution lists) and observed enum counts: `references/tsu-evidence.md`. The build recipes derived from them, for both platforms: `tosca-platform-guide` → `references/test-patterns.md`.
 
 ## Format in brief
 
@@ -48,39 +50,44 @@ Stdlib only; screenshots (`FileContent.Data`) are skipped by every command excep
 - Every entity has exactly `ObjectClass`, `Surrogate` (its ID), `Attributes` (**all values are strings**: `"0"`, `"1"`, `"37"`) and `Assocs` (lists of surrogates).
 - Associations are **bidirectional** (`XTestStep.Module` ↔ `XModule.TestSteps`), and an export contains everything its objects reference.
 - Nested blobs: attributes starting with `H4sI` are base64(gzip(XML)): `TestCase.TestConfigurationParameters`, `XModule.TCProperties`. Commander blobs are **UTF-16**, Cloud blobs UTF-8 with BOM. `XParam SelfHealingData` is .NET-typed JSON in a string. `FileContent.Data` is base64 PNG, which makes up most of the file size.
+- `ApiModule` extras: `TCProperties` blob carries `IsRequest`, `Method`, `Resource`, `StatusCode` and a `CorrelationId` shared by the request/response pair. `Payload` is plain base64 UTF-8. `ExplicitConnection` / `Headers` are plain base64 too, but in Tosca 14–15-era samples they decode to **.NET BinaryFormatter** key/value lists (`AAEAAAD/////…`), not JSON (confirmed in 6 samples).
 
 ## Object model
 
 | ObjectClass | Key attributes | Key Assocs |
 |-------------|----------------|------------|
 | `TCProject`, `TCFolder`, `TCComponentFolder`, `TestStepLibrary` | Name | `Items`, `ParentFolder` (walk up for the path) |
-| `TestCase` | Name, Description, TestCaseWorkState, TestConfigurationParameters (blob) | `Items` → folders, `ParentFolder` |
-| `TestStepFolder` | Name (Precondition / Process / Verification / Postcondition …), Condition | `Items` |
+| `TestCase` | Name, Description, TestCaseWorkState, TestConfigurationParameters (blob) | `Items` → folders, or steps / block calls directly (the norm in 12 of 12 public Commander samples with test cases), `ParentFolder` |
+| `TestStepFolder` | Name (Precondition / Process / Verification / Postcondition …, or any free-form name), Condition | `Items` |
 | `XTestStep` | Name, Condition, Repetition, DisabledDescription (non-empty = disabled) | `Module` → `XModule`, `TestStepValues` |
-| `XTestStepValue` | Value, ActionMode, ActionProperty, Operator, ExplicitName, DataType | `ModuleAttribute`, `SubValues` / `ParentValue` (recursive) |
-| `XModule` / `ApiModule` | Name, BusinessType, InterfaceType, TCProperties (blob) | `Properties` → `XParam`, `Attributes`, `TestSteps` |
+| `XTestStepValue` | Value, ActionMode, ActionProperty (`Visible`, `Exists`, `InnerText`, `Count`, `Index` …), Operator (0 plain, 1 equals on Verify, 6 with `Count`, probably ≥), ExplicitName (buffer name on `TBox Set Buffer`, column/row on `<Col>`/`<Row>`/`<Cell>`), DataType (0 String, 2 Numeric, 3 Boolean, 4 Password; confirmed in 5 samples) | `ModuleAttribute`, `SubValues` / `ParentValue` (recursive) |
+| `XModule` / `ApiModule` | Name, BusinessType, InterfaceType, TCProperties (blob); ApiModule also ExplicitConnection, Headers, Payload | `Properties` → `XParam` (+ an empty `ApiParameter` on API modules), `Attributes`, `TestSteps` |
 | `XModuleAttribute` | Name, BusinessType, Cardinality, DefaultActionMode | `Properties` → `XParam`, `Attributes` / `ParentAttribute` (child elements) |
-| `XParam` | Name, Value, ParamType (**5** = TechnicalId/locator, **8** = configuration) | `ExtendableObject` (owner) |
+| `XParam` | Name, Value, ParamType (**5** = TechnicalId/locator incl. API `Path`/`PathType`, confirmed in 9 samples; **8** = configuration, 14 samples; **2** = steering such as FireEvent / DecisiveColumns / HeaderRow / UserSimulation, 7 samples; 4 / 6 / 7 = other identification info, see worked examples) | `ExtendableObject` (owner) |
 | `ReuseableTestStepBlock` | Name | `Items`; `ParameterLayer` → `Parameter` |
-| `TestStepFolderReference` (block call) | – | `ReusedItem` → block; `ParameterLayerReference` → `AllParameterReferences` → `ParameterReference{Value}` → `Parameter` |
-| `TestCaseControlFlowItem` (If / loops) | StatementType | `ControlFlowFolders` → `TestCaseControlFlowFolder` named Condition / Then / Else / Loop |
+| `TestStepFolderReference` (block call) | – | `ReusedItem` → block; `ParameterLayerReference` → `AllParameterReferences` → `ParameterReference{Value}` → `Parameter` (absent in all 14 public Commander samples, whose blocks have no parameters) |
+| `TestCaseControlFlowItem` (If / loops) | StatementType (1 = If, confirmed), MaximumRepetitions | `ControlFlowFolders` → `TestCaseControlFlowFolder` named Condition / Then / Else / Loop (folder StatementType 0 = Condition, 1 = Then) |
+| `RecoveryScenario` (Commander too) | Name, ScenarioType, RetryLevel | `Items` → `XTestStep`; owned by `OwnedRecoveryScenarioCollection` (`Scenarios`) under a `TCFolder` |
+| `ExecutionList` | Name, TCProperties (custom props, e.g. `TestType`) | `Items` → `ExecutionEntry{Repetitions}` → `TestCase`; `ExecutionLogs` |
 | Cloud extras seen | `TestSheet`, `TDAttribute`, `TDInstance(Value)`, `TestCaseTemplateDetail/Instance`, `RecoveryScenario` | |
+| Other classes seen | `ApiMessage` / `ApiSchema` (API Scan definitions), `TCConfiguration` (+ `TCConfigurationLink`), `TCObjectProperty`, `OwnedFile` / `FileContent`, users/groups (`TCUser`, `TCUserGroup`), `ReportDefinition` / `DataSetDefinition`, legacy classic `Module` / `ModuleAttribute` / `ObjectMap` | |
 
-There's no separate `UniqueId`; `Surrogate` is the identity. ExecutionLists and TCPs as standalone entities haven't been seen in samples yet (TCPs appear only as the blob).
+There's no separate `UniqueId`; `Surrogate` is the identity. ExecutionLists do export (1 sample, full-workspace). TCPs appear only as `TestConfigurationParameters` blobs, on `TCProject`, `TCFolder`, `TCConfiguration` and `TestCase`. Configuration blobs can hold plaintext secrets.
 
 ### ActionMode codes (bit flags)
 
 | Code | Meaning | Confidence |
 |------|---------|------------|
-| 37 | Input | confirmed |
-| 69 | Verify | confirmed |
-| 101 | WaitOn | confirmed |
-| 165 | Buffer | confirmed |
-| 517 | Select (default on containers) | inferred |
-| 515 | Insert (API params/headers) | inferred |
-| 1 | navigation-only, on `{NULL}` container values with children | inferred |
+| 37 | Input (also clicks: `X` / `{Click}`) | confirmed in 11 samples |
+| 69 | Verify | confirmed in 9 samples |
+| 101 | WaitOn | confirmed earlier; not in the 14 public samples |
+| 165 | Buffer (Value = buffer name) | confirmed in 4 samples |
+| 517 | Select (on `{NULL}` containers, list `Index`) | confirmed in 8 samples |
+| 515 | Insert (every API request value; request-attribute default) | confirmed in 3 samples |
+| 519 | Constraint (pick a list item by child values; default on TDS *Find & provide* attributes) | strong inference, 3 samples |
+| 1 | container pass-through on `{NULL}` values with children (default for JSON response / DB containers) | inferred name, seen in 7 samples |
 
-Treat the inferred ones as hypotheses; check them against TCAPI or a known object before relying on them. Value tokens are the usual Tosca syntax: `{CLICK}`, `{NULL}`, `{B[x]}`, `{PL[x]}` (block parameter), `{CP[x]}` (config param), `{XL[x]}`. Encrypted values (a GUID plus base64) can't be decrypted outside the source workspace.
+Treat the inferred ones as hypotheses; check them against TCAPI or a known object before relying on them. Tosca-TSU-Format's FORMAT_GUIDE (69 = Click, 165 = Verify, 515/517/519 = TDS) and tosca-playwright-migration (69 = WaitOn, 101 = Constraint, 519 = Insert) contradict the sample evidence; don't use those maps. Value tokens are the usual Tosca syntax: `{CLICK}`, `{NULL}`, `{B[x]}`, `{PL[x]}` (block parameter), `{CP[x]}` (config param), `{XL[x]}`. Also seen: `{DATE[..][..][fmt]}`, `{DATETIME}`, `{CALC[..]}`, `{RANDOMTEXT[n]}`, `{RANDOMREGEX[..]}`, `{EXPORTTOCSV[file]}`, `{XB[x]}` (wildcard extraction in Verify), and `{REGEX[..]}` with named groups, which in Verify mode creates one buffer per group. Encrypted values (a GUID plus base64) can't be decrypted outside the source workspace.
 
 ## Commander vs Cloud exports
 
