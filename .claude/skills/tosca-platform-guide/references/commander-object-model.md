@@ -346,7 +346,7 @@ Source: [Create a Recovery Scenario](https://docs.tricentis.com/tosca-2026.1/en-
 | Instantiate | Context menu "Create TemplateInstance" creates one TestCase per instance in a **TemplateInstance** folder. `DataSourcePath`, `InstantiationSelector` (subset) apply. Ctrl+R = "Reinstantiate" |
 | Generated cases | Copy the template structure, ActionModes and WorkState. Hand edits set `ChangedManually` and are **lost on re-instantiation**, so edit the template only |
 
-Cloud has no TemplateInstance equivalent, so use data sets + parameters there ([commander-vs-cloud.md](commander-vs-cloud.md)). Copied template steps keep a hidden link to the data source.
+Cloud has the same TestCase-Design objects (a real Cloud export contains TestSheets, templates and template instances; see `tosca-tsu` → `tsu-schema.md` §2.6), but this repo has no Cloud tooling for authoring them yet ([commander-vs-cloud.md](commander-vs-cloud.md)). Copied template steps keep a link to their source (`DerivedFrom` in exports), and `{XL[]}` values are resolved to literals in the instances.
 
 Source: [Instances](https://docs.tricentis.com/tosca-2026.1/en-us/content/testcase_design/instances.htm), [TestSheets](https://docs.tricentis.com/tosca-2026.1/en-us/content/testcase_design/testsheets.htm), [TestCase templates](https://docs.tricentis.com/tosca-2026.1/en-us/content/tosca_commander/testcase_templates.htm), [Combining templates with data sources](https://docs.tricentis.com/tosca-2026.1/en-us/content/tosca_commander/combining_templates.htm), [Assign test data](https://docs.tricentis.com/tosca-2026.1/en-us/content/tosca_commander/assigning_test_data.htm), [Creating TemplateInstances](https://docs.tricentis.com/tosca-2026.1/en-us/content/tosca_commander/instantiating_testcases.htm)
 
@@ -423,7 +423,7 @@ Source: [TQL Search](https://docs.tricentis.com/tosca-2026.1/en-us/content/tosca
 |-------|-----------|-------|-----|
 | Editing | Tasks and attributes on live objects, then `save_workspace` | JSON over REST, GET after every write | [commander-vs-cloud.md](commander-vs-cloud.md) |
 | Reusable block | Library → block → `{PL[]}`, names wired by the tool | `sharedAction` + ULID `parameterLayerId` wiring | `blocks.md` |
-| Test data | TestSheets, Classes, templates, `{XL[]}` | Data sets + parameters (no TemplateInstance) | §11 |
+| Test data | TestSheets, Classes, templates, `{XL[]}` | Same TestCase-Design objects (seen in export) + data sets | §11 |
 | Search | TQL (TCShell/TCAPI/UI), not through MCP | Inventory search / toscactl | [reuse-scan.md](reuse-scan.md) |
 | Standard modules | Imported Standard subset (modules are visible in the tree) | Engine packages by GUID, not in Inventory | `standard-modules.md` |
 | Dynamic values | Full list incl. `{CALC}` (Excel), `{S[]}`, `{RES[]}` | `{SCRIPT}` / `{XP}` not registered; `{MATH}` works | §6 |

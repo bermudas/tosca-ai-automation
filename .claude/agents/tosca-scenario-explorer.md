@@ -36,5 +36,6 @@ Return only the inventory, in the formats defined in the two skills:
 
 - Short header: target, platform (web / SAP GUI), MCP server used, preconditions (user role, test data).
 - One table per page/screen: identity (Url+Title, or Transaction+Program+Screen), the existing module if any, and per element: label, raw ID from the MCP, Tosca TechnicalIds / RelativeId, status (existing ✓ / existing ✗ / new), action + value, verify.
+- **Build hints** for the builder, keyed to `tosca-platform-guide` → `test-patterns.md`: what to **WaitOn** after each action (element + property, P12); **optional** popups/banners (If, P7); tables/lists where a row must be picked **by content** and its key column (Constraint, P4); values to **buffer** and where they're reused (P2); step sequences that repeat across the scenario or match an existing block (block with business parameters, P11); stable test-ID attributes available (`data-test-id` etc. → `attributes_<attr>`, P9).
 - Suggested `.agents/apps/<app>.md` updates: new or changed locators, traps, breakpoints, popups (the caller or you write them; see `.agents/README.md`).
 - Open issues: ambiguous elements, flaky timing, popups that appear only sometimes, defects observed in the application (report them; don't work around them).

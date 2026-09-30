@@ -2,6 +2,8 @@
 
 Proven step shapes to apply when you **build or fix** a test. Each pattern gives the platform-neutral shape first, then how to write it on Commander and on Cloud. The shapes come from real exported workspaces (`tosca-tsu` → `references/tsu-evidence.md`, which has the raw entity detail and enum counts) and from the official rules in [commander-object-model.md](commander-object-model.md) and `toscacloud-cli` → `best-practices.md`.
 
+New to the object structure? Read [object-anatomy.md](object-anatomy.md) first: it shows a complete module and test case; this file then gives the shape for each situation.
+
 How to use:
 
 1. Pick the pattern that matches the scenario step, **after** the reuse scan ([reuse-scan.md](reuse-scan.md)). An existing test case or block in the user's workspace beats a pattern from here, because it carries their conventions.
@@ -10,6 +12,8 @@ How to use:
    - Commander/Tosca Server without MCP (older version, Commander closed, CI, remote server): **TCAPI** (the .NET DLLs) or the **Tosca REST API**, see [commander-authoring-apis.md](commander-authoring-apis.md); TCShell for batch tasks (`cli-api-commander`).
    - Cloud: JSON (`toscacloud-cli`: `web-automation.md`, `sap-automation.md`, `blocks.md`, `standard-modules.md`) or the official `tosca-authoring-automated-testcase` path.
 3. Standard-module names below are the Commander *Standard subset* names. On Cloud, find the equivalent in the engine packages (`/builder/packages`, `standard-modules.md`). Never hard-code a module or attribute ID you haven't read on the target.
+
+Clicks are written `X` (direct click, the preferred form); use `{CLICK}` only when the control needs real mouse emulation.
 
 Notation used in the shapes:
 
@@ -159,11 +163,13 @@ Use only for things that **may or may not** appear: cookie or consent banners, "
 ```
 If
   Condition   STEP 'Banner shown?' -> Cookie Banner   Accept.Visible = 'True' [Verify]
-  Then        STEP 'Accept'        -> Cookie Banner   Accept = '{CLICK}'      [Input]
+  Then        STEP 'Accept'        -> Cookie Banner   Accept = 'X'            [Input]
 ```
 
 - A failing condition Verify only selects the branch; it doesn't fail the test. A wildcard Verify (`*-*`) is the "contains" idiom.
-- **Never** wrap a business Verify in an If to get past a failure: that's defect masking (`toscacloud-cli` SKILL.md). Loops: prefer `Repetition` or Constraint (P4) over While/Do.
+- **Never** wrap a business Verify in an If to get past a failure: that's defect masking (`toscacloud-cli` SKILL.md). Don't use If/Else as a blind retry of a failed action ("First try / Second try"): fix the wait (P12) instead. A state-checked repeat is fine ("dialog still visible → click Save again", `toscacloud-cli` → `pdf-modules.md`).
+- Else is a third folder; name folders clearly, but tools read their type, not their name.
+- Loops: prefer `Repetition` or Constraint (P4). When a loop is unavoidable (polling a status, iterating a buffered array), use a While with a Verify condition and always set `MaximumRepetitions` (5–20 in real projects) so it can't spin forever.
 - Commander: `TestCaseControlFlowItem` with Condition / Then / Else folders ([commander-object-model.md](commander-object-model.md) §9). Cloud: `ControlFlowItemV2` (`web-automation.md` "Conditional steps", VJS probe variant for tab cleanup). On Cloud, narrow the module-level `Title`/`Url` first, or the condition hard-fails instead of evaluating false.
 
 ## P8. Data-driven: TCPs, TestSheets / templates, TDS
@@ -173,7 +179,7 @@ Choose by where the data comes from:
 | Need | Use |
 |------|-----|
 | Environment values shared by many tests (URL, browser, endpoint) | Test configuration parameters, `{CP[x]}`, set high in the tree |
-| Same flow over many data combinations | Commander: TestCase-Design TestSheet + template + instances ([commander-object-model.md](commander-object-model.md) §11). Cloud: data sets + parameters (no template instances; `commander-vs-cloud.md`) |
+| Same flow over many data combinations | TestCase-Design: TestSheet + template + instances, on both platforms ([commander-object-model.md](commander-object-model.md) §11). Cloud authoring tooling for templates isn't in this repo yet; data sets + parameters are the fallback |
 | Data created during or between runs (orders to pay, users to reuse) | TDS / TDM, with a `Status` column so consumed rows aren't reused (`best-practices.md`) |
 
 ```
@@ -183,6 +189,20 @@ STEP 'Import to TDS' -> TestData - Import items (standard)
 ```
 
 TDS connection settings belong in the configuration's TCPs, not in the test case. Consuming modules (*Find & provide*) filter rows by Constraint.
+
+Template shape, as a real project builds it:
+
+```
+TestSheet 'Sign-up'  → attributes Customer.Email, Customer.Password, Customer.Birth.Day, Options.Cookie banner
+TestCase 'Create account' (template)
+  Folder 'Accept cookies'           Condition: 'Options.Cookie banner' == "Shown"
+  CALL 'Sign up'                    Email = '{XL[Customer.Email]}'  Password = '{XL[Customer.Password]}'
+  STEP …                            day   = '{XL[Customer.Birth.Day]}' [Input]
+TemplateInstance → one TestCase per TestSheet row, named after the row
+```
+
+- Template values reference the sheet with `{XL[Path.To.Attribute]}`, in step values **and** in block-call parameters. Conditions on folders, steps or block calls select which parts each instance gets.
+- Instantiation copies the template with the XL resolved to literals and drops the branches whose condition is false. **Edit the template or the sheet, never the instances**: they're regenerated on reinstantiation.
 
 ## P9. Module design: locators vs steering vs configuration
 
@@ -197,12 +217,46 @@ Use when you create or fix a module.
 - The module root identifies the window/page (Html `Title`/`Url`, SAP transaction/program/screen); attributes identify controls within it.
 - Tables get placeholder children `<Row>`, `<Col>`, `<Cell>` whose real target comes from ExplicitName in the step (P4).
 - The same screen can have two modules (XScan Html + Vision AI); a test may use each where it's strongest.
+- XScan exposes any HTML attribute as a TechnicalId named `attributes_<attr>` (e.g. `attributes_data-test-id`) and CSS values as `style_<prop>`. A stable test ID attribute beats `ClassName` or `InnerText`. Avoid `style_*`, `OuterHtml` and framework-generated attributes (`attributes_ng-reflect-…`) as primary identifiers: they change with every release.
+- Current scans store `SelfHealingData` (weighted alternative properties) on each attribute. Leave it to Tosca; fix the primary TechnicalIds instead.
 - Design rules (size, attribute order, naming, uniqueness proof): [commander-object-model.md](commander-object-model.md) §3.5, `web-automation.md` / `sap-automation.md`, `web-exploration`, `sap-gui-exploration`.
 
 ## P10. Execution grouping
 
 - Commander: ExecutionList → ExecutionEntries (one per test case, `Repetitions`), grouped as Smoke / Regression / Archive. CI can pick lists by a custom property such as `TestType`. §13 of [commander-object-model.md](commander-object-model.md).
 - Cloud: playlists (`tosca-create-playlist`, `tosca-run`).
+
+## P11. Reusable block with business parameters
+
+Use when the same step sequence runs with different data: login, open app, create entity, search. Create the block only once it's actually reused (`best-practices.md` §1.5).
+
+```
+Library → Block 'Login'   Business Parameters: URL, User, Password
+  STEP 'Open'   -> OpenUrl       Url      = '{PL[URL]}'      [Input]
+  STEP 'Log in' -> Login Page    User     = '{PL[User]}'     [Input]
+                                 Password = '{PL[Password]}' [Input]
+                                 Login    = 'X'              [Input]
+TestCase:  CALL 'Login'   URL = '{CP[URL]}'   User = '{CP[UserName]}'   Password = '{CP[UserPassword]}'
+```
+
+- Inside the block, use `{PL[Name]}` as the whole value (Input, Insert) or inside a Verify string. No dots in parameter names.
+- At the call site pass `{CP[x]}` for environment and credentials, `{B[x]}` for values produced earlier in the case, literals for test data, and `{XL[..]}` in templates (P8).
+- Each call stores only the parameters it sets. Check every call site before renaming or removing a parameter (`tosca-tsu` → `tsu-schema.md` §4 lists the traversal).
+- Commander: block in a TestStepLibrary, parameters under "Business Parameters", call = TestStepFolderReference ([commander-object-model.md](commander-object-model.md) §8; TCAPI `CreateTestStepFolderReference` in [commander-authoring-apis.md](commander-authoring-apis.md)). Cloud: `toscacloud-cli` → `blocks.md` (ULID wiring, `parameterLayerId` copied verbatim).
+
+## P12. Dynamic waits (WaitOn), not static waits
+
+Use wherever the app needs time: page loads, spinners, async results.
+
+```
+STEP 'Wait for result' -> Results Page
+    - Results grid.Exists   = 'True'              [WaitOn]
+    - Status label.InnerText = 'Completed'        [WaitOn]
+```
+
+- WaitOn polls until the property matches or the timeout expires. Real projects use it with `Exists`, `Visible` and `InnerText`.
+- Use `TBox Wait` (a fixed number of ms) only to let a process settle in teardown. Steering params `WaitBefore` / `WaitAfter` on a module attribute cover a whole module at once. The one documented exception is a short fixed wait right after `OpenUrl` for single-page apps that render after load (`toscacloud-cli` → `field-notes.md`).
+- A WaitOn that times out is a real failure signal: report it, don't pad it with longer static waits.
 
 ---
 

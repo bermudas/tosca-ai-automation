@@ -78,8 +78,10 @@ Cloud's test model is essentially Commander's TBox model (XModules / XTestSteps)
 
 Before you build or fix a test case, module or block, on either platform and with any runtime tier:
 
-1. **Pick a pattern** from [references/test-patterns.md](references/test-patterns.md): test case skeleton with recovery, buffer chaining, test-data preparation, row selection by Constraint, API request/response, DB check, optional-element If, data-driven options, module parameter kinds, execution grouping. Each pattern shows the Commander and the Cloud way to write it.
+0. **Know what you're building**: [references/object-anatomy.md](references/object-anatomy.md) shows a complete module, test case and reusable block as real projects build them, part by part, with the Commander and Cloud field names, the rules every good case follows, and a result checklist. It links to the detailed files for each part.
+1. **Pick a pattern** from [references/test-patterns.md](references/test-patterns.md): test case skeleton with recovery, buffer chaining, test-data preparation, row selection by Constraint, API request/response, DB check, optional-element If, block with business parameters, WaitOn, data-driven options, module parameter kinds, execution grouping. Each pattern shows the Commander and the Cloud way to write it.
 2. **Get the object details right.** Commander: [references/commander-object-model.md](references/commander-object-model.md) (object trees, module/attribute properties, ActionModes, dynamic expressions, TBox standard modules, TQL, official design rules with doc links). Cloud: `toscacloud-cli` references.
-3. **Use the tier you're on.** Commander without MCP (Tosca Server, older versions, CI): TCAPI or REST recipes in [references/commander-authoring-apis.md](references/commander-authoring-apis.md).
+3. **Find the call for your runtime** in [references/build-guide.md](references/build-guide.md): a matrix of every build operation (create case, add step, set value, block call, If, recovery, TCP, run, read back) × Commander MCP / TCShell / TCAPI / REST and Cloud MCP / toscactl / tn / `tosca_cli.py`, with quality gates and known gaps per runtime.
+4. **Use the tier you're on.** Commander without MCP (Tosca Server, older versions, CI): TCAPI or REST recipes in [references/commander-authoring-apis.md](references/commander-authoring-apis.md).
 
 Raw evidence from real `.tsu` exports (entity detail, enum codes and counts): `tosca-tsu` → `references/tsu-evidence.md`.

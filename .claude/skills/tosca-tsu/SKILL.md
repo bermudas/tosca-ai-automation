@@ -35,7 +35,7 @@ diff <(python3 $S commander.tsu tree "Login" --no-ids) <(python3 $S cloud.tsu tr
 
 Stdlib only; screenshots (`FileContent.Data`) are skipped by every command except `entity`. Exports can be tens of MB, so prefer `summary` / `tree NAME` over dumping everything into the context.
 
-Entity-level detail from real exports (API module blobs, Constraint / Select / container codes, Set Buffer, If folders, DB Expert, TDS, recovery scenarios, Html / Vision AI params, execution lists) and observed enum counts: `references/tsu-evidence.md`. The build recipes derived from them, for both platforms: `tosca-platform-guide` → `references/test-patterns.md`.
+**Object graph** (every class, both ends of every association, cardinalities, template instantiation, and which questions a `.tsu` can answer): `references/tsu-schema.md`. Entity-level detail per pattern (API blobs, business parameters, Constraint / WaitOn / container codes, Set Buffer, If / loops, DB Expert, TDS, recovery, locators and self-healing) and observed enum counts over 18 exports: `references/tsu-evidence.md`. The build recipes derived from them, for both platforms: `tosca-platform-guide` → `references/test-patterns.md`.
 
 ## Format in brief
 
@@ -60,16 +60,16 @@ Entity-level detail from real exports (API module blobs, Constraint / Select / c
 | `TestCase` | Name, Description, TestCaseWorkState, TestConfigurationParameters (blob) | `Items` → folders, or steps / block calls directly (the norm in 12 of 12 public Commander samples with test cases), `ParentFolder` |
 | `TestStepFolder` | Name (Precondition / Process / Verification / Postcondition …, or any free-form name), Condition | `Items` |
 | `XTestStep` | Name, Condition, Repetition, DisabledDescription (non-empty = disabled) | `Module` → `XModule`, `TestStepValues` |
-| `XTestStepValue` | Value, ActionMode, ActionProperty (`Visible`, `Exists`, `InnerText`, `Count`, `Index` …), Operator (0 plain, 1 equals on Verify, 6 with `Count`, probably ≥), ExplicitName (buffer name on `TBox Set Buffer`, column/row on `<Col>`/`<Row>`/`<Cell>`), DataType (0 String, 2 Numeric, 3 Boolean, 4 Password; confirmed in 5 samples) | `ModuleAttribute`, `SubValues` / `ParentValue` (recursive) |
+| `XTestStepValue` | Value, ActionMode, ActionProperty (`Visible`, `Exists`, `InnerText`, `Count`, `Index` …), Operator (0 plain, 1 equals on Verify; 2 and 6 rare, meaning unresolved, see tsu-evidence), ExplicitName (buffer name on `TBox Set Buffer`, column/row on `<Col>`/`<Row>`/`<Cell>`), DataType (0 String, 2 Numeric, 3 Boolean, 4 Password; 6 probably RawString) | `ModuleAttribute`, `SubValues` / `ParentValue` (recursive) |
 | `XModule` / `ApiModule` | Name, BusinessType, InterfaceType, TCProperties (blob); ApiModule also ExplicitConnection, Headers, Payload | `Properties` → `XParam` (+ an empty `ApiParameter` on API modules), `Attributes`, `TestSteps` |
 | `XModuleAttribute` | Name, BusinessType, Cardinality, DefaultActionMode | `Properties` → `XParam`, `Attributes` / `ParentAttribute` (child elements) |
-| `XParam` | Name, Value, ParamType (**5** = TechnicalId/locator incl. API `Path`/`PathType`, confirmed in 9 samples; **8** = configuration, 14 samples; **2** = steering such as FireEvent / DecisiveColumns / HeaderRow / UserSimulation, 7 samples; 4 / 6 / 7 = other identification info, see worked examples) | `ExtendableObject` (owner) |
+| `XParam` | Name, Value, ParamType (**5** = TechnicalId/locator incl. API `Path`/`PathType`, confirmed in 9 samples; **8** = configuration, 14 samples; **2** = steering such as FireEvent / DecisiveColumns / HeaderRow / UserSimulation, 7 samples; 4 / 6 / 7 = extra properties, innerText, XPath, see tsu-evidence; `SelfHealingData` is a type-2 JSON param) | `ExtendableObject` (owner) |
 | `ReuseableTestStepBlock` | Name | `Items`; `ParameterLayer` → `Parameter` |
-| `TestStepFolderReference` (block call) | – | `ReusedItem` → block; `ParameterLayerReference` → `AllParameterReferences` → `ParameterReference{Value}` → `Parameter` (absent in all 14 public Commander samples, whose blocks have no parameters) |
-| `TestCaseControlFlowItem` (If / loops) | StatementType (1 = If, confirmed), MaximumRepetitions | `ControlFlowFolders` → `TestCaseControlFlowFolder` named Condition / Then / Else / Loop (folder StatementType 0 = Condition, 1 = Then) |
+| `TestStepFolderReference` (block call) | – | `ReusedItem` → block; `ParameterLayerReference` → `AllParameterReferences` → `ParameterReference{Value}` → `Parameter` (seen in 4 exports: 536 references over 114 calls) |
+| `TestCaseControlFlowItem` (If / loops) | StatementType (1 = If, 2 = loop), MaximumRepetitions | `ControlFlowFolders` → `TestCaseControlFlowFolder` (StatementType 0 = Condition, 1 = Then / Loop, 2 = Else; names are free text) |
 | `RecoveryScenario` (Commander too) | Name, ScenarioType, RetryLevel | `Items` → `XTestStep`; owned by `OwnedRecoveryScenarioCollection` (`Scenarios`) under a `TCFolder` |
 | `ExecutionList` | Name, TCProperties (custom props, e.g. `TestType`) | `Items` → `ExecutionEntry{Repetitions}` → `TestCase`; `ExecutionLogs` |
-| Cloud extras seen | `TestSheet`, `TDAttribute`, `TDInstance(Value)`, `TestCaseTemplateDetail/Instance`, `RecoveryScenario` | |
+| TestCase-Design (seen in a Cloud export) | `TestSheet` → `TDAttribute` tree → `TDInstances` → `TDInstance` (rows pick values via `TDInstanceValue.ValueInstance`); `TestCaseTemplateDetail` / `TestCaseTemplateInstance`; instances link back with `DerivedFrom` | see `references/tsu-schema.md` §2.6 |
 | Other classes seen | `ApiMessage` / `ApiSchema` (API Scan definitions), `TCConfiguration` (+ `TCConfigurationLink`), `TCObjectProperty`, `OwnedFile` / `FileContent`, users/groups (`TCUser`, `TCUserGroup`), `ReportDefinition` / `DataSetDefinition`, legacy classic `Module` / `ModuleAttribute` / `ObjectMap` | |
 
 There's no separate `UniqueId`; `Surrogate` is the identity. ExecutionLists do export (1 sample, full-workspace). TCPs appear only as `TestConfigurationParameters` blobs, on `TCProject`, `TCFolder`, `TCConfiguration` and `TestCase`. Configuration blobs can hold plaintext secrets.
@@ -80,7 +80,7 @@ There's no separate `UniqueId`; `Surrogate` is the identity. ExecutionLists do e
 |------|---------|------------|
 | 37 | Input (also clicks: `X` / `{Click}`) | confirmed in 11 samples |
 | 69 | Verify | confirmed in 9 samples |
-| 101 | WaitOn | confirmed earlier; not in the 14 public samples |
+| 101 | WaitOn | confirmed: 118 values in 2 exports |
 | 165 | Buffer (Value = buffer name) | confirmed in 4 samples |
 | 517 | Select (on `{NULL}` containers, list `Index`) | confirmed in 8 samples |
 | 515 | Insert (every API request value; request-attribute default) | confirmed in 3 samples |
@@ -93,12 +93,12 @@ Treat the inferred ones as hypotheses; check them against TCAPI or a known objec
 
 | | Commander | Cloud |
 |---|-----------|-------|
-| Surrogate | Tosca sequential GUID `3a1af892-05e1-…` | 26-char **ULID** `01KY32WM…` |
+| Surrogate | Tosca sequential GUID `3a1af892-05e1-…` | 26-char **ULID** `01KY32WM…`; Standard modules keep their well-known Commander GUIDs (60 of 4,703 entities in the sample) |
 | Revision / CheckOutState | real repository values | always `"0"` |
 | Nested blob encoding | UTF-16 XML | UTF-8-BOM XML |
 | SelfHealingData `$type` | `Tricentis.TCAddIns.XDefinitions.Modules…` | `Tricentis.TCCore.BusinessObjects.Modules.SelfHealing…` |
 
-Otherwise it's the **same schema**: same class names, attributes and assocs. That's the file-level evidence behind `tosca-platform-guide` → `commander-vs-cloud.md`.
+Otherwise it's the **same schema**: same class names, attributes and assocs. Checked on a real Cloud export: no attribute on a shared class is Cloud-only, the ActionMode/ParamType codes match, and the only Cloud-only associations (`DerivedFrom`, `TemplateDetail`) belong to template instantiation, not to the platform. That's the file-level evidence behind `tosca-platform-guide` → `commander-vs-cloud.md`.
 
 ## Mapping to the Cloud JSON model
 

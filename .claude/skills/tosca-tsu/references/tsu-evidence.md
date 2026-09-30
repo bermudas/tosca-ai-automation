@@ -2,7 +2,7 @@
 
 The **build recipes** derived from these samples are in `tosca-platform-guide` → `references/test-patterns.md` (both platforms). This file keeps what's specific to reading `.tsu` files: entity-level details, blob contents and the observed enum values with their counts. Read it together with the object model in `../SKILL.md`.
 
-Evidence base: 14 public **Commander** exports (GUID surrogates; see "Sources"). No Cloud (ULID) export was in the set. Values in this file are neutral placeholders, not copies.
+Evidence base: **18 exports**: 14 public Commander exports (see "Sources") plus 4 private ones (3 Commander, 1 **Cloud**, the first Cloud sample). The object graph and association map built from all 18 is in [tsu-schema.md](tsu-schema.md). Values in this file are neutral placeholders, not copies; nothing from the private exports is quoted.
 
 `tsu_inspect.py tree` notation: `STEP 'name' -> module 'M'` is an `XTestStep` whose `Module` assoc points at `M`. Indented `- Attr = 'value' [Mode]` lines are `XTestStepValue`s (`ModuleAttribute` → the `XModuleAttribute` named `Attr`, `[Mode]` = decoded `ActionMode`). Deeper indentation = `SubValues`. `name=` is `ExplicitName`, `.Prop` is `ActionProperty`.
 
@@ -28,18 +28,40 @@ Evidence base: 14 public **Commander** exports (GUID surrogates; see "Sources").
 
 - `TBox Set Buffer`: module XParams (type 8) `Engine=Framework`, `SpecialExecutionTask=SetBuffer`; single attribute `<Buffername>` with `Parameter=True`, `ExplicitName=True`. The buffer name is the value's `ExplicitName`.
 - `TBox Partial Buffer`: `Buffer`, `Value`, `Start`, `End` (`Start`/`End` DataType 2).
-- Tokens seen: `{B[x]}` (74 values, case-insensitive; `{b[x]}` occurs), `{CP[x]}`, `{NULL}`, `{DATE}`, `{DATETIME}`, `{CALC}`, `{REGEX}`, `{RANDOMREGEX}`, `{RANDOMTEXT}`, `{XB}`, `{EXPORTTOCSV[file]}`, `{Click}`, wildcards `*`. **Not seen:** `{PL[]}`, `{XL[]}`, `{RND[]}`, `{TDS[]}`, `{MATH[]}`.
+- Tokens seen: `{B[x]}` (74 values, case-insensitive; `{b[x]}` occurs), `{CP[x]}`, `{NULL}`, `{DATE}`, `{DATETIME}`, `{CALC}`, `{REGEX}`, `{RANDOMREGEX}`, `{RANDOMTEXT}`, `{XB}`, `{EXPORTTOCSV[file]}`, `{Click}`, wildcards `*`. The private exports add `{PL[x]}` (81), `{XL[x]}` (165, templates), `{SENDKEYS}`, `{STRINGREPLACE}`, `{TRIM}`, `{RND}`, `{KEYPRESS}`/`{KEYDOWN}`/`{KEYUP}`, `{TEXTINPUT}`, `{DOUBLECLICK}`, `{CLEAR}`. **Not seen anywhere:** `{TDS[]}`, `{MATH[]}`.
+
+### Business parameters (P11)
+
+Not in any public export, but present in all 4 private ones (18 blocks with a `ParameterLayer`, 77 `Parameter`s, 536 `ParameterReference`s over 114 calls).
+
+```
+ReuseableTestStepBlock 'Login'
+  ParameterLayer 'Business Parameters' → Parameter URL, Parameter User, Parameter Password
+  STEP 'Open' -> OpenUrl             Url      = '{PL[URL]}'       [Input]
+  STEP 'Log in' -> Login Page        User     = '{PL[User]}'      [Input]
+                                     Password = '{PL[Password]}'  [Input]
+TestCase …
+  CALL 'Login'   ParameterLayerReference 'Business Parameters'
+                   ParameterReference(URL)      = '{CP[URL]}'
+                   ParameterReference(User)     = '{CP[UserName]}'
+                   ParameterReference(Password) = '{CP[UserPassword]}'
+```
+
+- `{PL[x]}` is used as the **whole value** in Input (48) and Insert (27) values, and embedded inside Verify strings (5).
+- Call-site values: `{CP[x]}` for environment and credentials (the most common), `{B[x]}` for buffers from earlier steps, literals, and `{XL[Sheet.Attr]}` in templates.
+- A call only stores references for the parameters it sets; `Parameter.ValueSelectionGroup` was empty in all samples.
 
 ### If control flow (P7)
 
-- `TestCaseControlFlowItem` `StatementType=1` (If), `MaximumRepetitions` empty. Folders: `TestCaseControlFlowFolder` `Condition` (StatementType 0), `Then` (1). Else (2 per FORMAT_GUIDE) and While/Do loops were not seen.
+- `TestCaseControlFlowItem` `StatementType`: 1 = If (24), **2 = loop** with Condition + Loop folders and `MaximumRepetitions` 20 or 5 (3). Folder `StatementType`: 0 = Condition, 1 = Then / Loop, 2 = Else (13). Do loops weren't seen.
+- Folder names are free text ("Else do nothing", "First try / Second try"). Trust `StatementType`, not the name. Using If/Else as a retry ("First try" / "Second try") shows up once; it's a smell, not a pattern to copy.
 - `TestStepFolder` names are free-form. In 12 of 12 sample files with test cases, steps and block calls hang directly off `TestCase.Items`; only one sample used `TestStepFolder`s at all.
 
 ### DB Expert and TDS (P6, P8)
 
 - DB Expert module: `XModule BusinessType=DatabaseConnection`. `Connection string` has `DefaultDataType=4` (password-type), so real connection strings may appear encrypted. Tables use placeholder attributes `<Col>` / `<Cell>` / `<Row>`, targeted via `ExplicitName` (header text, `#n`, `$last` …).
 - TDS connection settings (`TestDataEndpoint`, `TestDataRepository`) live in **`TCConfiguration.TestConfigurationParameters`** blobs.
-- No `TestSheet` / TestCase-Design entities appeared in any sample.
+- No `TestSheet` in the public samples. The private Cloud export has full TestCase-Design (14 TestSheets, 16 templates with instances); the object chain is in [tsu-schema.md](tsu-schema.md) §2.6.
 
 ### Pre/Postcondition blocks and recovery (P1)
 
@@ -47,6 +69,17 @@ Evidence base: 14 public **Commander** exports (GUID surrogates; see "Sources").
 - Repeating child attributes (`Argument`, `Cardinality 0-N`) sit under a `{NULL}` **Select** container, one `SubValue` per occurrence.
 - Block calls (`TestStepFolderReference`) had **no `ParameterLayerReference`** in any sample, so business parameters weren't observed.
 - `TCFolder` → `OwnedRecoveryScenarioCollection` → `RecoveryScenario` (`ScenarioType=1`, `RetryLevel=0` here, which differs from FORMAT_GUIDE) → `XTestStep`s with `ParentFolder` = the scenario.
+
+### Waits (WaitOn, 101)
+
+Seen 118 times in 2 private exports, never in the public ones: `ActionProperty` `Exists` (74), `Visible` (38), `InnerText` (6), always with `True` or an expected text. That's the dynamic-wait idiom: wait for the element or text instead of `TBox Wait`.
+
+### Locators and self-healing in current XScan exports (P9)
+
+- XScan exposes **any HTML attribute** as an identification parameter named `attributes_<attr>` (e.g. `attributes_data-test-id`, `attributes_class`, `attributes_href`, framework attributes such as `attributes_ng-reflect-…`), and CSS values as `style_<property>`. `OuterHtml` / `InnerHtml` also appear. Prefer a stable `attributes_data-test-id` over `ClassName` when it exists.
+- `SelfHealingData` (ParamType 2, on almost every Html attribute: 1,368 in the private exports) is .NET-typed JSON: `TcSelfHealingData` → `HealingParameters.$values[]` of `TcSelfHealingProperty {Name, Surrogate, ParamType, Value, Weight}`. It holds weighted alternative locator properties used when the primary TechnicalIds stop matching. Read it; never hand-edit it.
+- ParamType **7** = `XPath` (28), **6** = `innerText` (lower-case, 4), **4** = extra properties (`Visible`, `Focused`, `Url`, `DefaultName`). Configuration params seen in addition: `ConstraintIndex`, `IdentifyingContext` (Cloud).
+- UIA engine modules (`Engine=UIA`) appear for Windows dialogs next to Html modules.
 
 ### Modules: Html and Vision AI (P9)
 
@@ -71,39 +104,43 @@ XModule 'Orders View (Vision AI)'         BusinessType=Window  InterfaceType=1
 - TCPs appear as `TestConfigurationParameters` blobs on `TCProject`, `TCFolder`, `TCConfiguration` and `TestCase`. Configurations can contain **plaintext client secrets and passwords**: never paste them.
 - Full-workspace exports also contain `TCUser` (`EncryptedPassword`), `TCUserGroup`, `ReportDefinition` / `DataSetDefinition` (TQL `Constraint`), and legacy classic modules: `Module` → `ModuleAttribute` → `ObjectControlSimple`, `ObjectMap` → `ObjectMapParams{Label=KeyWord}`.
 
-## Observed enum values (14 files; "n / f" = occurrences / files)
+## Observed enum values (18 files)
 
-| Field | Value | Meaning (evidence) | n / f |
-|-------|-------|--------------------|-------|
-| `XTestStepValue.ActionMode` | 37 | Input: TBox params, text entry, `X`/`{Click}` | 290 / 11 |
-| | 69 | Verify: response fields, `.Visible`, `.Exists`, regex/wildcard checks | 112 / 9 |
-| | 515 | Insert: every API request value; `DefaultActionMode` of request attrs | 46 / 3 |
-| | 165 | Buffer: Value = buffer name | 41 / 4 |
-| | 517 | Select: `{NULL}` containers, list `Index` | 26 / 8 |
-| | 1 | container pass-through on `{NULL}` (default for JSON/DB containers) | 16 / 7 |
-| | 519 | Constraint: list-item filter; default on TDS *Find & provide* attrs | 4 / 2 (+1 as default) |
-| | 101 | WaitOn | not seen here |
-| `XModuleAttribute.DefaultActionMode` | 0 | unset (TBox XML/JSON example modules) | 338 / 3 |
-| `XTestStepValue.Operator` | 0 | none/plain (Input, Buffer, Insert) | 355 / 12 |
-| | 1 | equals (all plain Verifies, `{NULL}` containers) | 177 / 11 |
-| | 6 | comparison with `.Count` (probably ≥; inferred) | 3 / 2 |
-| `XTestStepValue.DataType` / `DefaultDataType` | 0 | String | 497 / 12 |
-| | 2 | Numeric (Duration, Start/End, totalSize) | 22 / 5 |
-| | 3 | **Boolean** (`True` values: Close connection, success, done) | 13 / 5 |
-| | 4 | **Password** / encrypted (Password, Connection string) | 3 / 1 |
-| `XParam.ParamType` | 8 | configuration (Engine, SpecialExecutionTask, BusinessAssociation, ExplicitName, Parameter) | 3125 / 14 |
-| | 5 | technical ID / locator (Tag, Id, InnerText, Title, RelativeId, API Path/PathType) | 1071 / 9 |
-| | 2 | steering (FireEvent, DecisiveColumns, HeaderRow, UserSimulation, UseWildcards…) | 148 / 7 |
-| | 4 | extra identification/info (Visible, Caption, ApiKey, Container, Adapter, DefaultName) | 87 / 4 |
-| | 7 | window Caption (Vision AI), ContextMenu (SAP) | 10 / 3 |
-| | 6 | ActionCommand (SAP) | 4 / 1 |
-| `TestCaseControlFlowItem.StatementType` | 1 | If | 2 / 2 (same block) |
-| `TestCaseControlFlowFolder.StatementType` | 0 / 1 | Condition / Then | 2 / 2 |
+| Field | Value | Meaning (evidence) | n |
+|-------|-------|--------------------|---|
+| `XTestStepValue.ActionMode` | 37 | Input: TBox params, text entry, `X`/`{Click}` | 1,304 |
+| | 69 | Verify: response fields, `.Visible`, `.Exists`, regex/wildcard checks | 645 |
+| | 1 | container pass-through on `{NULL}` (default for JSON/DB containers) | 350 |
+| | 517 | Select: `{NULL}` containers, list `Index` | 169 |
+| | 101 | **WaitOn** (`Exists` / `Visible` / `InnerText`), 2 files | 118 |
+| | 515 | Insert: every API request value; `DefaultActionMode` of request attrs | 110 |
+| | 165 | Buffer: Value = buffer name | 80 |
+| | 519 | Constraint: list-item filter; default on TDS *Find & provide* attrs | 4 (+1 as default) |
+| `XModuleAttribute.DefaultActionMode` | 0 | unset (TBox XML/JSON example modules) | 338 |
+| `XTestStepValue.Operator` | 0 | none/plain (Input, Buffer, Insert) | 1,683 |
+| | 1 | equals (all plain Verifies, `{NULL}` containers) | 1,093 |
+| | 2 | once, on a Verify `.Exists`. `NotEquals` if the TCAPI enum order (None, Equals, NotEquals, Greater, GreaterOrEqual, Smaller, LessOrEqual) maps to 0–6 *(inferred)* | 1 |
+| | 6 | with `.Count`. By that enum order it's `LessOrEqual`; earlier notes guessed ≥. Unresolved: check on a real object | 3 |
+| `DataType` / `DefaultDataType` | 0 | String | 2,691 |
+| | 2 | Numeric (Duration, Start/End, totalSize) | 68 |
+| | 3 | **Boolean** (`True` values: Close connection, success, done) | 13 |
+| | 4 | **Password** / encrypted (Password, Connection string) | 6 |
+| | 6 | on a `Keys` value (`{ENTER}`). `RawString` if the TCAPI `ModuleAttributeDataType` order (String, Date, Numeric, Boolean, Password, Secret, RawString) maps to 0–6, which fits 2/3/4 above *(inferred)* | 2 |
+| `XParam.ParamType` | 8 | configuration (Engine, SpecialExecutionTask, BusinessAssociation, ExplicitName, Parameter, ConstraintIndex) | 6,363 |
+| | 5 | technical ID / locator (Tag, Id, InnerText, Title, `attributes_*`, `style_*`, RelativeId, API Path/PathType) | 3,750 |
+| | 2 | steering (SelfHealingData, FireEvent, DecisiveColumns, HeaderRow, UserSimulation, WaitBefore/After…) | 1,807 |
+| | 4 | extra properties (Visible, Focused, Url, Caption, ApiKey, DefaultName) | 92 |
+| | 7 | XPath; window Caption (Vision AI); ContextMenu (SAP) | 90 |
+| | 6 | innerText (Html), ActionCommand (SAP) | 12 |
+| `TestCaseControlFlowItem.StatementType` | 1 / 2 | If / loop (Condition + Loop, `MaximumRepetitions`) | 24 / 3 |
+| `TestCaseControlFlowFolder.StatementType` | 0 / 1 / 2 | Condition / Then or Loop / Else | 27 / 27 / 13 |
 | `XModuleAttribute.Cardinality` | `0-1`, `1`, `0-N`/`0-n`, `1-N`/`1-n`, `0-3` | case varies | |
-| `XModuleAttribute.InterfaceType` | 2147483647 / 1 | generic / GUI | 1521 / 99 |
-| `XModule.InterfaceType` | 0 / 1 | non-GUI (TBox, API, DB) / GUI | 284 / 62 |
-| `TestCase.TestCaseWorkState` | 0 / 2 | | 27 / 20 |
-| `RecoveryScenario` | ScenarioType=1, RetryLevel=0 | | 1 / 1 |
+| `XModuleAttribute.InterfaceType` | 2147483647 / 1 | generic / GUI | 1,779 / 1,419 |
+| `XModule.InterfaceType` | 0 / 1 | non-GUI (TBox, API, DB) / GUI | 308 / 132 |
+| `XModule.IsAbstract` | 1 | generalization module (with `Specializations`) | 10 |
+| `TestCase.TestCaseWorkState` | 0 / 2 | | 44 / 60 |
+| `RecoveryScenario.ScenarioType` | 0 / 1 | Recovery / CleanUp *(by name)*, `RetryLevel=0` | 1 / 2 |
+| `TDAttribute.BusinessRelevant` | 1 / 0 | test data / structure | 260 / 14 |
 
 XModule `BusinessType` values seen: `Window`, `HtmlDocument`, `JsonDocument`, `XmlDocument`, `DatabaseConnection`, `ExcelEngine`, `TextStreamManipulator`, `MenuItem`, `String`. Attribute `BusinessType` values seen: `Button`, `TextBox`, `Link`, `Label`, `Table`/`Row`/`Column`/`Cell`, `JsonObject`/`JsonArray`/`JsonValue`, `XmlElement`/`XmlAttribute`, `VisionAIControl`, `SapGuiStatusbar`, `TreeNode`, `MenuItem`, `RadioButton`, `GenericGUI`.
 
@@ -115,4 +152,5 @@ The ActionMode bit pattern fits the codes (1 base; 4 on every read/select mode; 
 - [Boehringer-Ingelheim/toscaci](https://github.com/Boehringer-Ingelheim/toscaci) `e2e/src/tosca/subsets.tsu` (Apache-2.0): full sample workspace with execution lists, recovery scenario, Pre/Postcondition blocks and the standard-module library.
 - [zondor/awesome-subsets](https://github.com/zondor/awesome-subsets): Salesforce Html modules. No license.
 - [bjorn-ali-goransson/Tosca-TSU-Format](https://github.com/bjorn-ali-goransson/Tosca-TSU-Format) `FORMAT_GUIDE.md`: format reference used for cross-checking. No license; contradictions are noted in SKILL.md.
+- 4 private exports on the maintainer's machine (3 Commander web projects, 1 Cloud export with TestCase-Design). Only structure and counts were used.
 - [raviacn95/tosca-playwright-migration](https://github.com/raviacn95/tosca-playwright-migration) (MIT): TBox module semantics. Its ActionMode map (69 = WaitOn, 101 = Constraint, 519 = Insert) contradicts the evidence above.

@@ -57,7 +57,7 @@ tn --loop "Activate /tosca. Create automated test '<name>' reusing modules from 
 4. **[tn] Scaffold** — `tosca_builder_scaffoldTestCase` with module references
 5. **[toscactl] Verify** — `assets find --type testCase --name "<name>"`
 
-See [references/module-sourcing.md](references/module-sourcing.md), [references/action-modes-and-buffering.md](references/action-modes-and-buffering.md). Step shapes to plan the flow with (skeleton + recovery, buffer chaining, data preparation, Constraint row selection, API pair, DB check, optional If): `tosca-platform-guide` → `references/test-patterns.md`.
+See [references/module-sourcing.md](references/module-sourcing.md), [references/action-modes-and-buffering.md](references/action-modes-and-buffering.md). Step shapes to plan the flow with (skeleton + recovery, buffer chaining, data preparation, Constraint row selection, API pair, DB check, optional If, block with business parameters, WaitOn): `tosca-platform-guide` → `references/test-patterns.md`.
 
 ## Hand off
 

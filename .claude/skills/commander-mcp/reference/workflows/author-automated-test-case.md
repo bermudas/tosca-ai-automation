@@ -20,4 +20,4 @@ Build an automated test from a description, reusing existing modules. Extends
 
 - Reuse existing modules only; **never scan or rescan UI automation modules** — report missing-module gaps instead.
 - Buffer/reuse: set the source value `ActionMode=Buffer`, then reference `{B[name]}` on consumer values.
-- Step shapes to start from: `tosca-platform-guide` → `references/test-patterns.md`. Object details, ActionModes (Constraint, WaitOn), expressions, TBox standard modules and design rules: `references/commander-object-model.md`.
+- What a finished case and module look like, and the call for each operation on this runtime: `tosca-platform-guide` → `references/object-anatomy.md`, `references/build-guide.md`. Step shapes to start from: `references/test-patterns.md`. Object details, ActionModes (Constraint, WaitOn), expressions, TBox standard modules and design rules: `references/commander-object-model.md`.

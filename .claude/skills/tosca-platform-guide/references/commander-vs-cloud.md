@@ -18,12 +18,12 @@ Rows marked ≈ are close analogues, not identical. Verify against a real object
 | Action modes | Input, Insert, Verify, Buffer, WaitOn, Select, Constraint, Exclude | `actionMode` with the same names | Plus `actionProperty` / operator on Verify. |
 | Value expressions | `{CLICK}`, `{SENDKEYS[..]}`, `{B[buf]}`, `{CP[param]}`, `{DATE}`, … | Same syntax | |
 | Reusable steps | Library → **Reuseable TestStepBlock** + Business Parameters; referenced in test cases | **Reusable blocks** (`blocks` API, artifact type `sharedAction`) + `businessParameters`; referenced via `TestStepFolderReferenceV2` + `parameterLayerId` | Cloud needs ULID wiring (`blocks.md`). |
-| Control flow | If / Then / Else, loops (While / Do) statements | `ControlFlowItemV2` (If / loops) | |
+| Control flow | If / Then / Else, loops (While / Do) statements | `ControlFlowItemV2` (`statementTypeV2: "If"` documented; loop and Else JSON not documented in this repo yet) | |
 | Test configuration | Test Configuration Parameters (TCPs), inherited down the folder tree | `testConfigurationParameters` on the case | e.g. `Browser`, credentials. |
 | Recovery / cleanup | Recovery Scenarios, CleanUp Scenarios | `recoveryScenarioCollection` | |
 | Standard modules | Standard subset (TBox Automation Tools: OpenUrl, Wait, Buffer, Execute JavaScript, T-code, …) | Engine-bundled Standard **packages** (well-known GUIDs, `/builder/packages`) | Don't rebuild what Standard modules already do. |
 | API tests | API modules (`create_api_module`) | API messages (`apiMessage`), API execution | |
-| Test data | TestSheets / TCD, TemplateInstances, Test Data Service (TDS) | ≈ Data sets (TDM, `tosca-datasets`) | Cloud has no TemplateInstance equivalent. Use data sets + parameters. |
+| Test data | TestSheets / TCD, TemplateInstances, Test Data Service (TDS) | TestCase-Design with TestSheets, templates and template instances (same classes; seen in a real Cloud `.tsu`, `tosca-tsu` → `tsu-schema.md` §2.6), plus data sets (TDM, `tosca-datasets`) | Authoring templates through Cloud APIs/CLIs isn't covered in this repo yet: check the tenant UI/API before promising it. |
 | Manual tests | ManualXTestStep (+ values for expected results) | Manual test cases (`tosca-authoring-manual-testcase`) | |
 | Execution grouping | **ExecutionList** → ExecutionEntries | **Playlist** → items | |
 | Execution result | ExecutionLog → ExecutionTestCaseLog → ExecutionXTestStepLog | Run → failed test steps (`GetFailedTestSteps`, `toscactl` execution views) | |
@@ -40,7 +40,7 @@ The same test reads differently on each side. Use this to translate a source obj
 | You read on Cloud (JSON) | Look for / set on Commander (attributes, tasks) |
 |--------------------------|--------------------------------------------------|
 | `testCaseItems[]` tree (`TestStepFolderV2`, `TestStepV2`) | TestStepFolders / XTestSteps under the TestCase (`get_object_info` children) |
-| `TestStepV2.module` / `moduleAttributeReference` | XTestStep's referenced XModule / XTestStepValue's XModuleAttribute |
+| `TestStepV2.moduleReference` / `moduleAttributeReference` | XTestStep's referenced XModule / XTestStepValue's XModuleAttribute |
 | `testStepValues[].value`, `actionMode`, `actionProperty`, operator | XTestStepValue `Value`, `ActionMode`, `Operator`, `Condition` (`get_attributes`) |
 | Module root params `Engine`, `Url`/`Title` or SAP `Transaction`/`ProgramName`/`ScreenNumber` | XModule configuration params / TechnicalIds of the same names |
 | Attribute params `Tag`, `Id`, `InnerText`, `RelativeId`, … (`type: TechnicalId`) | XModuleAttribute TechnicalIds with the same names and values |
