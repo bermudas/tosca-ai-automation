@@ -155,7 +155,7 @@ The CLI's `playlists status/logs` returns **403** on personal-agent runs — `Tr
 
 - **MCP vs CLI — capability split.** MCP write tools are **scaffolding-only**. Do not use `ScaffoldTestCase` when the user asks to `copy`/`clone`/`duplicate` a test case — it drops attribute bindings, `ControlFlowItemV2` nodes, and parameter values. Correct split:
   - **MCP (read/dispatch/inspect)**: `SearchArtifacts`, `AnalyzeTestCaseItems`, `GetModulesSummary`, `RunPlaylist`, `GetRecentRuns`, `GetRecentPlaylistRunLogs`, `GetFailedTestSteps`, `ListSimulatorAgents`, `Delete*ById`.
-  - **CLI (writes with full fidelity)**: `cases clone`, `cases update --json-file`, `modules update --json-file`, `blocks update`, `cases patch`, `inventory move`, TSU export/import.
+  - **CLI (writes with full fidelity)**: `cases clone`, `cases update --json-file`, `modules update --json-file`, `blocks add-param` / `set-value-range`, `cases patch`, `inventory move`, TSU export/import.
   - **CLI (writes with care — confirm-GET required)**: `cases patch`, `inventory patch` — silent-no-op on unsupported ops.
 
 - **MCP tool naming convention.** Tools are `mcp__ToscaCloudMcpServer__<MethodName>` — **double underscore**, PascalCase server name, PascalCase method. Do not write `mcp_toscacloudmcp_*` in user-facing text or tool invocations — that's a Copilot-autocomplete mistake and will not resolve.
@@ -167,6 +167,22 @@ These are implemented in the CLI and work on the live tenant:
 
 - **Inventory v1 folder ops**: create-folder, rename-folder, delete-folder, folder-ancestors, folder-tree
 - **MBT TSU**: export-tsu (→ binary blob), import-tsu (multipart upload)
+
+## Agent shortcuts: one-command GET → mutate → PUT
+
+Found while working around the MBT PATCH limits (deep JSON-pointer ops are silently dropped, modules have no usable PATCH surface). Each shortcut fetches the artifact, changes one thing and PUTs the whole body back, so the edit lands in one round-trip or fails loudly. Use them for small edits instead of hand-editing a full JSON dump; use `cases update --json-file` for structural rewrites and anything inside `ControlFlowItemV2` branches.
+
+| Command | Does | Notes |
+|---|---|---|
+| `cases scaffold-web <case> --url … [--title …]` | Adds the 4 standard folders to an **existing** case: Precondition `OpenUrl`, empty Process, optional Verification (`Verify JavaScript Result` on `document.title`), Teardown `CloseBrowser` | Standard-module GUIDs come from the CLI's validated table; re-check on a new tenant |
+| `cases insert-step <case> <Folder> --json-file step.json [--after N \| --before N \| --at-start]` | Inserts one `TestStepV2` into a top-level folder | Fills missing step / value ids with UUIDs (the API accepts UUID or ULID here; ULIDs are mandatory only for block `businessParameters[].id` / `parameterLayerId`). Names that repeat need `--folder-index` / `--anchor-index` |
+| `cases set-step-value <case> <Folder> <Step> <Attr> --to "…" [--js]` | Replaces one `testStepValues[].value` | `--js` lints Execute/Verify JavaScript payloads for the leading `{` / `"` / `[` parser trap. Ambiguous names: the command lists candidates and asks for `--folder-index` / `--step-index` / `--param-index`; it never picks silently |
+| `modules add-attr-param <module> <Attr> <Param> --to "…" [--type …]` | Upserts one attribute parameter (`Id`, `ClassName`, `Path`, `FireEvent`…) | Keeps the existing parameter `id` on update (server needs continuity). `--type` is written verbatim: use the JSON values `TechnicalId`, `Steering`, `Configuration` |
+| `modules set-param <module> <Param> --to "…" [--type …]` | Same for module-level parameters (`Title`, `Url`, `Engine`, steering flags) | Fix for the *"More than one matching tab"* error: `set-param <module> Url --to "https://host*" --type TechnicalId` |
+| `playlists create --name … [--run-mode …]` | Creates an empty playlist | `parallel` (default), `sequential`, `sequentialOnSameAgent` |
+| `playlists attach-case <playlist> <case> [-p k=v …]` | Appends the case as an `InputTestCaseV1` item, with optional per-item parameters | Handles the `TestCaseV1` → `InputTestCaseV1` reshape the PUT endpoint demands; you don't rebuild `items[]` by hand |
+
+After any of them, confirm with `cases get --json` / `modules get --json` / `playlists get` (`version` bumped, field changed), as for every write.
 
 ## Reusing scanned modules instead of creating new ones
 

@@ -61,7 +61,7 @@ Work sequentially, not in batches. Each build cycle is a complete loop:
 4. **Run** — personal agent via MCP for iterative debug, shared agent via CLI for CI/scheduled runs.
 5. **Inspect** — on failure, read the exact TBox message via `GetFailedTestSteps` (MCP) or `playlists logs` (CLI). Classify the failure (see next section) before changing anything.
 6. **Fix** — minimum-diff change: patch the offending module/step, not the whole case.
-7. **Confirm the write landed** — GET the artifact and check that the **`version` bumped** and the specific field you edited actually changed. A `✓ patched` / `204 No Content` from the API is **not** proof the delta was applied: MBT silently accepts unsupported JSON Patch ops (e.g. `remove` on an array element, deep JSON pointer paths like `/testCaseItems/1/items/2/testStepValues/0/value`, `move`) and returns 204 with zero changes. Inventory v3 PATCH has its own PascalCase/`{"operations":[…]}` wrapper — a request in MBT shape is accepted but ignored. Never report a change as done, never run the test, and never claim a fix based on the CLI's own "success" message alone. If PATCH did nothing, fall back to full PUT (`cases update` / `modules update` / `blocks update`).
+7. **Confirm the write landed** — GET the artifact and check that the **`version` bumped** and the specific field you edited actually changed. A `✓ patched` / `204 No Content` from the API is **not** proof the delta was applied: MBT silently accepts unsupported JSON Patch ops (e.g. `remove` on an array element, deep JSON pointer paths like `/testCaseItems/1/items/2/testStepValues/0/value`, `move`) and returns 204 with zero changes. Inventory v3 PATCH has its own PascalCase/`{"operations":[…]}` wrapper — a request in MBT shape is accepted but ignored. Never report a change as done, never run the test, and never claim a fix based on the CLI's own "success" message alone. If PATCH did nothing, fall back to full PUT (`cases update` / `modules update`; for blocks `blocks add-param` / `blocks set-value-range`, which PUT the whole block internally).
 8. **Validate** — re-run and confirm the step that previously failed now passes. Don't move on until green (or the failure is a documented application defect).
 9. **Report** — IDs (entityId / moduleId / playlistId), folder placement, any remaining gaps.
 
@@ -161,6 +161,10 @@ python tools/toscacloud-cli/tosca_cli.py cases steps <caseId> --json        # fu
 python tools/toscacloud-cli/tosca_cli.py cases create --name "..." --state Planned
 python tools/toscacloud-cli/tosca_cli.py cases update <caseId> --json-file case.json   # full PUT
 python tools/toscacloud-cli/tosca_cli.py cases clone <caseId> --name "..."
+# Shortcuts (GET → mutate → full PUT in one command; top-level folders only)
+python tools/toscacloud-cli/tosca_cli.py cases scaffold-web <caseId> --url https://… [--title "…"]   # 4 folders: OpenUrl / (empty Process) / optional title Verify / CloseBrowser
+python tools/toscacloud-cli/tosca_cli.py cases insert-step <caseId> <Folder> --json-file step.json [--after NAME|--before NAME|--at-start]   # one TestStepV2; missing ids filled
+python tools/toscacloud-cli/tosca_cli.py cases set-step-value <caseId> <Folder> <Step> <Attr> --to "…" [--js]   # one testStepValue.value; --*-index N when names repeat
 python tools/toscacloud-cli/tosca_cli.py cases export-tsu --ids "id1,id2" [--module-ids "m1"] [--block-ids "b1"] --output file.tsu
 python tools/toscacloud-cli/tosca_cli.py cases import-tsu --file file.tsu
 
@@ -168,6 +172,8 @@ python tools/toscacloud-cli/tosca_cli.py cases import-tsu --file file.tsu
 python tools/toscacloud-cli/tosca_cli.py modules get <moduleId> [--json]
 python tools/toscacloud-cli/tosca_cli.py modules create --name "..." --iface Gui
 python tools/toscacloud-cli/tosca_cli.py modules update <moduleId> --json-file body.json
+python tools/toscacloud-cli/tosca_cli.py modules add-attr-param <moduleId> <Attr> <Param> --to "…" [--type TechnicalId|Steering|Configuration]   # upsert an attribute parameter, keeps its id
+python tools/toscacloud-cli/tosca_cli.py modules set-param <moduleId> <Param> --to "…" [--type …]   # upsert a module-level parameter (Title, Url, Engine, steering flags)
 
 # Reusable blocks
 python tools/toscacloud-cli/tosca_cli.py blocks get <blockId>
@@ -179,6 +185,8 @@ python tools/toscacloud-cli/tosca_cli.py blocks delete <blockId> --force
 python tools/toscacloud-cli/tosca_cli.py cases patch <caseId> --operations '[{"op":"replace","path":"/workState","value":"Completed"}]'
 
 # Playlists
+python tools/toscacloud-cli/tosca_cli.py playlists create --name "…" [--run-mode parallel|sequential|sequentialOnSameAgent]
+python tools/toscacloud-cli/tosca_cli.py playlists attach-case <playlistId> <caseId> [-p key=value …]   # appends an InputTestCaseV1 item (+ per-item parameters)
 python tools/toscacloud-cli/tosca_cli.py playlists list
 python tools/toscacloud-cli/tosca_cli.py playlists list-runs
 python tools/toscacloud-cli/tosca_cli.py playlists run <id> --wait
@@ -207,7 +215,7 @@ python tools/toscacloud-cli/tosca_cli.py inventory folder-tree --folder-ids "<pa
 | Html module root `Engine` param | Manually created Html modules must have `{"name":"Engine","value":"Html","type":"Configuration"}` in the root-level `parameters` array. Without it: _XModules and XModuleAttributes have to provide the configuration param "Engine"_ |
 | Duplicate page elements | Modern pages render the same nav link in mobile + desktop. `Tag+InnerText+HREF` alone matches all copies. Use `browser_evaluate` to count matches; add `ClassName` to discriminate. |
 | Leftover browser tab | Start Precondition with `CloseBrowser Title="*"` before `OpenUrl` to avoid _"More than one matching tab"_ |
-| MBT PATCH ops | Lowercase: `replace`, `add`, `remove`. Response is 204 No Content — always GET the artifact afterwards and confirm `version` bumped and the target field actually changed. Unsupported ops (deep JSON-pointer paths into nested step trees, `remove` on array elements, `move`) are **silently ignored**: CLI still prints `✓ patched`, server still returns 204, but the body is unchanged. When the confirm-GET shows no diff, fall back to `cases update`/`modules update`/`blocks update` (full PUT). |
+| MBT PATCH ops | Lowercase: `replace`, `add`, `remove`. Response is 204 No Content — always GET the artifact afterwards and confirm `version` bumped and the target field actually changed. Unsupported ops (deep JSON-pointer paths into nested step trees, `remove` on array elements, `move`) are **silently ignored**: CLI still prints `✓ patched`, server still returns 204, but the body is unchanged. When the confirm-GET shows no diff, fall back to `cases update` / `modules update` (full PUT), or the `cases set-step-value` / `cases insert-step` / `modules add-attr-param` shortcuts, which do the GET → mutate → PUT round-trip for you. Blocks: `blocks add-param` / `blocks set-value-range` (there is no `blocks update` command). |
 | Inventory v3 PATCH body | Wrapper: `{"operations": [{"op": "Replace", ...}]}` — PascalCase op. Same confirm-GET rule: an MBT-shape body (bare array, lowercase op) is accepted and 204'd but applies no changes. |
 | Confirm writes before claiming success | Never trust the CLI's own `✓` line, an HTTP 204, or a `{}` response body as proof that your edit persisted. Always follow a write with a GET and assert the delta (usually: `version` field bumped). MBT PATCH has two silent-no-op cases (unsupported ops, deep paths); `modules update` returns `{}` on success too. One trivial probe — `{"op":"replace","path":"/description","value":"…"}` round-trip — is enough to calibrate whether the endpoint is accepting your shape before you batch real edits. |
 | Inventory search filter | Despite swagger, only lowercase works: `contains`, `and` |

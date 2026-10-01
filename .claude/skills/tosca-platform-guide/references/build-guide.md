@@ -44,7 +44,7 @@ Invariants to check on every write:
 - Each module attribute runs top to bottom in module order within one step. Use `0-N` / `ZeroToN` cardinality to use the same attribute twice.
 - `{PL[..]}` only inside a block, as the whole value (Input / Insert) or embedded in a Verify string. `{XL[..]}` only in templates. `{XB[..]}` only inside a Verify value.
 - `[Buffer]` takes the buffer **name** as its value. Buffers live for one test case and cross block boundaries.
-- Cloud IDs: root `id` is a UUID. Every attribute, parameter, value and item `id` is a fresh ULID. Copy `parameterLayerId` and `referencedParameterId` verbatim.
+- Cloud IDs: root `id` is a UUID. Attribute, parameter, value and item `id`s are fresh ULIDs (UUIDs are accepted for steps and values; `cases insert-step` fills them in). ULIDs are mandatory for block `businessParameters[].id` and `parameterLayerId`; copy `parameterLayerId` and `referencedParameterId` verbatim.
 
 ## 3. Build matrix
 
@@ -102,7 +102,7 @@ Sources: `commander-mcp` → `reference/tools-catalog.md`, `reference/workflows/
 | Read back artifact | `AnalyzeTestCaseItems` ? | `assets find` (proves it exists, nothing more) | `tosca_inventory_search` (exists) | `cases get --json` (`version` bumped) + `cases steps --json`; `modules get --json`; `blocks get --json` |
 | Persist | immediate | immediate | immediate | immediate: confirm with a GET |
 
-Sources: `tosca-cloud` → `runtime-routing.md`, `builder-orchestration.md`, `reference/tools-catalog.md`, `reference/workflows/*.md`; `toscactl-reference/SKILL.md`; `tosca-authoring-automated-testcase` (SKILL + references); `toscacloud-cli` SKILL.md ("Key CLI commands", caveats), `references/web-automation.md`, `sap-automation.md`, `blocks.md`, `field-notes.md` (MCP vs CLI split). `cases set-step-value`, `cases insert-step`, `cases scaffold-web`, `modules add-attr-param` / `set-param` and `playlists create` / `attach-case` exist in `tools/toscacloud-cli/tosca_cli.py --help` but aren't described in the skill docs yet.
+Sources: `tosca-cloud` → `runtime-routing.md`, `builder-orchestration.md`, `reference/tools-catalog.md`, `reference/workflows/*.md`; `toscactl-reference/SKILL.md`; `tosca-authoring-automated-testcase` (SKILL + references); `toscacloud-cli` SKILL.md ("Key CLI commands", caveats), `references/web-automation.md`, `sap-automation.md`, `blocks.md`, `field-notes.md` (MCP vs CLI split). `cases set-step-value`, `cases insert-step`, `cases scaffold-web`, `modules add-attr-param` / `set-param` and `playlists create` / `attach-case` are the one-command GET → mutate → PUT shortcuts described in `toscacloud-cli` → `field-notes.md` "Agent shortcuts".
 
 ### 3.3 Minimal build sequences per tier
 

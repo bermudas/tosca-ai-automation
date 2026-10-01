@@ -2427,7 +2427,7 @@ def modules_add_attr_param(
     param_name:  str  = typer.Argument(..., help="Parameter name (e.g. 'ClassName', 'Path', 'Id')"),
     to:          str  = typer.Option(..., "--to", help="Parameter value"),
     param_type:  str  = typer.Option("TechnicalId", "--type",
-                                     help="Parameter type (TechnicalId | Setting | Default). Default: TechnicalId."),
+                                     help="Parameter type as stored in module JSON: TechnicalId | Steering | Configuration. Default: TechnicalId."),
     attr_index:  Optional[int] = typer.Option(None, "--attr-index",
                                               help="Required when multiple attributes share the same name"),
     skip_confirm: bool = typer.Option(False, "--skip-confirm",
@@ -2501,8 +2501,9 @@ def modules_set_param(
     module_id:    str  = typer.Argument(..., help="Module Id"),
     param_name:   str  = typer.Argument(..., help="Module-level parameter name (e.g. a Steering flag)"),
     to:           str  = typer.Option(..., "--to", help="Parameter value"),
-    param_type:   str  = typer.Option("Setting", "--type",
-                                      help="Parameter type. Default: Setting."),
+    param_type:   str  = typer.Option("Steering", "--type",
+                                      help="Parameter type as stored in module JSON: TechnicalId | Steering | Configuration. "
+                                           "Default: Steering (module-level flags); use TechnicalId for Title / Url."),
     skip_confirm: bool = typer.Option(False, "--skip-confirm",
                                       help="Skip the post-PUT confirm-GET"),
 ):

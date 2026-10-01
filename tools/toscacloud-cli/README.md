@@ -160,6 +160,11 @@ python tools/toscacloud-cli/tosca_cli.py cases update <caseId> --json-file updat
 python tools/toscacloud-cli/tosca_cli.py cases patch <caseId> \
     --operations '[{"op":"replace","path":"/workState","value":"Completed"}]'
 
+# Shortcuts: GET → mutate → full PUT in one command (top-level folders only; PATCH drops deep ops)
+python tools/toscacloud-cli/tosca_cli.py cases scaffold-web <caseId> --url https://www.example.com --title "Example Domain"
+python tools/toscacloud-cli/tosca_cli.py cases insert-step <caseId> Process --json-file step.json [--after NAME|--before NAME|--at-start]
+python tools/toscacloud-cli/tosca_cli.py cases set-step-value <caseId> Process "Click Log in" "Log in" --to "X" [--js]
+
 # Export test cases / modules / blocks to a binary .tsu file (MBT v2 endpoint)
 # At least one of --ids, --module-ids, --block-ids must be provided
 python tools/toscacloud-cli/tosca_cli.py cases export-tsu --ids "id1,id2,id3" --output my_export.tsu
@@ -238,8 +243,14 @@ Module operations via MBT/Builder API v2.
 ```bash
 python tools/toscacloud-cli/tosca_cli.py modules get <moduleId>
 python tools/toscacloud-cli/tosca_cli.py modules create --name "LoginModule" --iface Gui
+python tools/toscacloud-cli/tosca_cli.py modules update <moduleId> --json-file module.json          # full PUT
+python tools/toscacloud-cli/tosca_cli.py modules add-attr-param <moduleId> "Log in" Id --to "login-btn" --type TechnicalId   # upsert one attribute parameter
+python tools/toscacloud-cli/tosca_cli.py modules set-param <moduleId> Url --to "https://host*" --type TechnicalId              # upsert one module-level parameter
 python tools/toscacloud-cli/tosca_cli.py modules delete <moduleId> --force
 ```
+
+`add-attr-param` / `set-param` keep the parameter's existing `id` when it already exists and PUT the whole module
+(modules have no working PATCH surface). `--type` is stored verbatim: `TechnicalId`, `Steering` or `Configuration`.
 
 InterfaceType enum: `Gui` | `NonGui`
 
@@ -258,6 +269,7 @@ python tools/toscacloud-cli/tosca_cli.py playlists get <playlistId>
 # Create / update / delete a playlist
 python tools/toscacloud-cli/tosca_cli.py playlists create --name "Smoke" --json-file playlist.json
 python tools/toscacloud-cli/tosca_cli.py playlists update <playlistId> --name "New Name"
+python tools/toscacloud-cli/tosca_cli.py playlists attach-case <playlistId> <caseId> [-p url=https://… -p user=qa1]   # append an InputTestCaseV1 item
 python tools/toscacloud-cli/tosca_cli.py playlists delete <playlistId> --force
 
 # Add or update a characteristic (e.g. pin to a specific agent)
