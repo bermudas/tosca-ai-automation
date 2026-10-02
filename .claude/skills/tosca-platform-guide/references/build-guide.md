@@ -228,4 +228,6 @@ Check these before the first run, and again before you report.
 | `tosca_cli.py` | Can't create a new block or a While loop (not documented). No `blocks update` command. No Password tokens (Portal). No deletes with the service role (403). Personal agents return 403. No TestSheet / template authoring | Portal UI (block creation, secrets, deletes, templates), then continue by JSON. Runs on MCP |
 | Cloud templates / TestSheets | Objects exist, but no authoring tooling in this repo | Ask the user. Fall back to data sets + block parameters (P8) |
 
+A `?` or `(u)` cell you verify on a real workspace or tenant becomes a fact: replace it here, with the version it was seen on. An object that doesn't work although the call succeeded: [compare-with-reference.md](compare-with-reference.md).
+
 When you escalate, say which tier you used and why ("Cloud MCP has no append-step tool → `cases insert-step`").

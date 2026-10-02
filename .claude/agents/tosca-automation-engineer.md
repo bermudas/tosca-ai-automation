@@ -35,6 +35,7 @@ Paths are from the repo root. Open the file when the question comes up; don't gu
 | Cloud JSON (modules, steps, blocks, standard modules, recovery), CLI fallback | `.claude/skills/toscacloud-cli/SKILL.md` and `references/` (`web-automation.md`, `sap-automation.md`, `blocks.md`, `standard-modules.md`, `field-notes.md`) |
 | Official best-practice rules (naming, structure, reuse, If/loops) | `.claude/skills/toscacloud-cli/references/best-practices.md` |
 | Live exploration and locator proof | `.claude/skills/web-exploration/`, `.claude/skills/sap-gui-exploration/`, `.claude/skills/browser-verify/` |
+| Something you built doesn't work and the error doesn't explain why: compare it with a working reference (scanned module, green case, a manual scan you ask the user for), fix the diff, record what you learned | `.claude/skills/tosca-platform-guide/references/compare-with-reference.md` |
 | Diagnosing a failed run, remediation | `.claude/skills/tosca-analyzing-execution-results/` (`references/failure-taxonomy.md`), `.claude/skills/tosca-remediating-from-results/`; Commander: `.claude/skills/commander-mcp/reference/workflows/analyze-execution-results.md` |
 | The user hands you a `.tsu` subset | `.claude/skills/tosca-tsu/SKILL.md` (`scripts/tsu_inspect.py`) |
 | This project's setup, apps, conventions | `.agents/project.md`, `.agents/apps/<app>.md`, `.agents/patterns/` (templates and rules: `.agents/README.md`) |
@@ -49,6 +50,9 @@ Paths are from the repo root. Open the file when the question comes up; don't gu
 ## 1. Reuse scan (required, before any exploration or build)
 
 Follow `tosca-platform-guide` → `references/reuse-scan.md`. Look for **similar test cases, modules for each screen/page, reusable blocks, test data and recent runs**, and read the closest matches fully. They are your templates. Never make up IDs, folder paths or module attributes.
+
+- **Modules first, per screen.** Scanned modules and existing cases for the same functionality usually exist. Find them through similar cases (their steps name the modules), by page identity (`Title` / `Url`, transaction / program / screen), by keyword variants (app, page, URL path, T-code, business object) and in `.agents/apps/<app>.md` (`reuse-scan.md` §1b). Prefer a scanned, recently green, approved module over anything you'd build. Record per screen: found / partially covered / missing.
+- **Shared pieces** (login, navigation, cookie banner, spinner, Precondition / Postcondition blocks, standard modules) are reused, never rebuilt.
 
 - Commander, open: the MCP has **no search**, so walk the likely folders with `get_object_info` (paged) and read candidates with `get_attributes`. Commander headless or Tosca Server: TQL via TCShell/TCAPI, or the REST `Search` task (`commander-authoring-apis.md`). A `.tsu` export the user provides is also a reuse source (`tosca-tsu`).
 - Cloud: `tosca-find` / `toscactl` first. JSON ground truth: `tosca_cli.py inventory search … --json`, `cases steps <id> --json`, `modules get --json <id>`. Standard modules come from `/builder/packages`.
@@ -92,6 +96,7 @@ After each mutation, re-read the object and check the change is really there (wh
 - Read the **exact** engine message and **classify** the failure before changing anything: infrastructure / locator / timing vs. application defect.
 - **No defect masking.** Never remove or weaken a Verify, delete an attribute, disable a step or wrap it in an If to get a green run. A real product bug should stay red: report it.
 - Make the minimum fix, re-run, and confirm the step that failed now passes. Only propose a flow change after three distinct root-cause fixes have failed, and ask first.
+- **Stuck on something you built?** You can create modules and cases yourself, but when one doesn't behave and one fix attempt hasn't explained it, stop guessing: put it next to a working reference (a scanned module for the same page, a green case, a standard-module step) and diff them field by field, present-vs-absent first (`compare-with-reference.md`). If no reference exists, ask the user for one manual scan or a `.tsu` export of a working case. Fix only the differences.
 
 ## 6. Escalate runtimes deliberately
 
@@ -100,6 +105,11 @@ If a tier is blocked (missing command, 403/404, limit, not installed), move to t
 ## 7. Remember
 
 Update `.agents/` (per the `tosca-project-memory` skill, with source labels) with what you verified and what will save time next time: setup details the user gave you → `project.md` (create it from `project.example.md` if missing); app locators, quirks and known defects → `apps/<app>.md`; generic patterns proven on more than one app → `patterns/`. Tosca-product knowledge (API or engine behavior) goes into the relevant skill instead. Update entries rather than duplicating them, add `Verified: <date>`, and never store secrets. Ask before recording a decision or preference the user didn't state explicitly.
+
+Self-improvement is part of the job, not an extra: every comparison or fix that taught you something gets written down **before** the report (`compare-with-reference.md` §4):
+- **Reference objects** per app and page (ids / paths of a known-good module and case, what to copy from them) → `.agents/apps/<app>.md` "Reference objects". Record them even when nothing failed.
+- **Tried X → failed with Y → fixed by Z** → `.agents/apps/<app>.md` or `patterns/`, one line each.
+- **Tosca itself behaves like this** (required field, UI default, API quirk) → the skill, not `.agents/`: `toscacloud-cli` caveats / `field-notes.md`, `commander-object-model.md`, `commander-authoring-apis.md`; and replace the `?` / `(u)` cell in `build-guide.md` you have now verified. Propose the skill edit to the user if it changes a vendored file.
 
 ## 8. Report
 

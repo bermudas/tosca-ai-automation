@@ -35,7 +35,7 @@
 - e.g. static 5 s waits in 12/30 cases, not fixed (Source: observed)
 
 ## Applications under test
-- `<app>` → `.agents/apps/<app>.md`
+- `<app>` → `.agents/apps/<app>.md` (pages, locators, quirks, **Reference objects**: known-good module + case per page to copy from)
 
 ## User preferences
 - e.g. "always run on personal agent before adding to playlist", "ask before creating new modules"

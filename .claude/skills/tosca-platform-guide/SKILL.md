@@ -84,4 +84,6 @@ Before you build or fix a test case, module or block, on either platform and wit
 3. **Find the call for your runtime** in [references/build-guide.md](references/build-guide.md): a matrix of every build operation (create case, add step, set value, block call, If, recovery, TCP, run, read back) × Commander MCP / TCShell / TCAPI / REST and Cloud MCP / toscactl / tn / `tosca_cli.py`, with quality gates and known gaps per runtime.
 4. **Use the tier you're on.** Commander without MCP (Tosca Server, older versions, CI): TCAPI or REST recipes in [references/commander-authoring-apis.md](references/commander-authoring-apis.md).
 
+5. **Stuck?** Compare your object with a working reference and record the diff: [references/compare-with-reference.md](references/compare-with-reference.md).
+
 Raw evidence from real `.tsu` exports (entity detail, enum codes and counts): `tosca-tsu` → `references/tsu-evidence.md`.

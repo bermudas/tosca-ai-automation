@@ -29,6 +29,7 @@ After a task, **only** for things that were verified and will save time next tim
 
 - **Setup the user told you** (tenant, workspace, folder for new tests, preferred agent/playlist, naming rules) → `project.md`
 - **App facts proven live** (a locator that works, a trap, a popup that appears only sometimes, a known product defect with its ticket) → `apps/<app>.md`
+- **Reference objects** per page (ids / paths of a known-good scanned module and a green test case, what to copy from them) and **failed attempt → fix** one-liners → `apps/<app>.md` → *Reference objects*. They turn the next build on this app into a copy job (`tosca-platform-guide` → `compare-with-reference.md`)
 - **Patterns that worked on more than one app, or are clearly generic** → `patterns/<topic>.md`
 - **Knowledge about Tosca itself** (a new API quirk, CLI behavior, engine rule) doesn't go here. Propose adding it to the relevant skill instead (e.g. `toscacloud-cli/references/field-notes.md`) so every project benefits.
 

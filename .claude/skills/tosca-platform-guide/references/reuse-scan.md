@@ -6,11 +6,37 @@ Existing test cases, modules and reusable blocks are the best templates you have
 
 | Look for | Why |
 |----------|-----|
-| **Similar test cases** (same app, transaction or flow; same folder) | Template for structure, step order, buffers, test configuration, naming |
+| **Similar test cases** (same app, transaction or flow; same folder) | Template for structure, step order, buffers, test configuration, naming. Their steps also tell you which modules the team uses for each screen (§1b) |
 | **Modules for the screens/pages in the scenario** | Reuse them as they are. Scanned modules carry self-healing data and proven locators. |
 | **Reusable blocks / TestStepBlocks** (login, precondition, navigation, postcondition) | Wire them in instead of rebuilding |
 | **Test data** (Cloud data sets, Commander TestSheets / TCPs) | Parameterize the same way |
 | **Recent runs of similar cases** | Tell you which modules actually work today (a module in a red run may be stale) |
+
+## 1b. Finding modules for a screen when the names don't match
+
+The user describes the functionality ("submit a pick-up order"); modules are named after pages ("Shop | Review order | Summary"). Search in this order and stop when a screen is covered:
+
+1. **Through similar test cases.** A case for the same area lists every module it uses. Read its steps (Commander: step → `Module`; Cloud: `cases steps <id> --json` → `moduleReference.id`) and collect the modules per screen. This is the fastest route and gives you the team's own step shapes for free.
+2. **By page identity, not by name.** A module's root parameters say which page it drives: Html `Title` / `Url`, SAP `Transaction` / `ProgramName` / `ScreenNumber`, API `Resource`. Search those values with URL path segments, page titles, T-codes.
+   - TCShell / TCAPI: `=>SUBPARTS:XModule[Name=i?"order"]`, and by locator `=>SUBPARTS[TechnicalId=?"orders"]` ([commander-object-model.md](commander-object-model.md) §14).
+   - Commander MCP: walk `Modules/<App>/…` and read the module's parameters with `get_attributes`.
+   - Cloud: `inventory search "<keyword>" --type Module --json`, then `modules get --json <id>` and check the root `Title` / `Url` and the attribute names.
+3. **By keyword variants.** Try: the application name and acronym, the page title, the URL path, the transaction code, the business object (Order, Customer, Invoice), UI labels the user mentioned, and the team's naming pattern from `.agents/project.md`. Module folders usually mirror the application (`Modules/<App>/<Area>/`).
+4. **Known modules in project memory.** `.agents/apps/<app>.md` lists pages, their modules and quirks from earlier work.
+5. **Shared pieces.** Login, navigation, cookie banner, spinner, popups and the Precondition / Postcondition blocks almost always exist already: look in the Library / shared folders before anything else.
+6. **Standard modules** for browser, waits, buffers, files, DB: never rebuild those (Commander Standard subset; Cloud `/builder/packages`).
+
+For every screen in the scenario, record the result: **module found (id, folder)**, **partially covered** (which controls are missing), or **no module**. Only the last two go to live exploration, and the explorer gets the existing modules so it verifies them instead of rediscovering them.
+
+### Can I trust the module I found?
+
+| Check | How | If it fails |
+|---|---|---|
+| Is it a scan, not a hand-made stub? | Scanned modules carry a screenshot attachment and `SelfHealingData` steering params; their attributes have full TechnicalIds | A stub with 1–2 attributes and no locators: treat as "no module" |
+| Is it current? | Modified date vs the app's last release; the module appears in a **recent green run** of a similar case | Verify its locators live before reuse (explorer) |
+| Is it approved? | Folder stage (`Approved` > `Ready for Review` > `In Work`), WorkState | Another user's `In Work` object: ask before building on it |
+| Does it cover my controls? | Compare the attribute list with the controls the scenario touches | Partially covered: reuse it and ask whether to extend it (rescan / add attributes), don't create a duplicate module for the same page |
+| Who else uses it? | Commander: `=>SUBPARTS:Module[Name=="…"]=>AllReferences=>SUPERPART:TestCase` or the module's `TestSteps` back-link; Cloud: search cases in the same folder and read their steps | Shared module: change it only after checking every user |
 
 ## 2. How: per platform
 
