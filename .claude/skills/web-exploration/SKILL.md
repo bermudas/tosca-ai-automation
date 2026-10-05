@@ -17,6 +17,7 @@ Tools: **Playwright MCP** (`playwright` server) for navigation and snapshots. **
 
 ## Exploration loop
 
+0. Even if `.agents/apps/<app>.md` already documents the page, walk it again and snapshot it: sites change. Treat documented locators as hypotheses to re-check.
 1. `browser_navigate <url>`. Resize to the size the Tosca agent will use (maximized, about 1920×1080). The Html scanner is viewport-scoped.
 2. `browser_snapshot`: the accessibility tree gives you candidate elements and refs.
 3. For each element the scenario touches, pick TechnicalIds in this priority order and **prove uniqueness**:
@@ -31,8 +32,11 @@ Tools: **Playwright MCP** (`playwright` server) for navigation and snapshots. **
    // browser_evaluate — must return 1
    document.querySelectorAll('<css for chosen properties>').length
    ```
-   Also check that the element is visible in the viewport (`getBoundingClientRect().y` within `innerHeight`) and not under a `visibility:hidden` parent.
-4. Act like the user would (`browser_click`, `browser_type`, `browser_select_option`, hover for menus). Keep the user's real path: no direct URL jumps they didn't make.
+   Also check that the element is visible in the viewport (`getBoundingClientRect().y` within `innerHeight`) and not under a `visibility:hidden` / `display:none` parent. Record what you find: a collapsed element gets `Exists`, not `Visible`, in the Verify.
+   - For `ClassName`, record the **full** `getAttribute('class')` string (Tosca compares all of it) and mark dynamic tokens for wildcarding.
+   - Record any `id`, `test-id`, `data-test-id` (or other test hook) attribute: it becomes its own TechnicalId.
+   - Count matches **including hidden copies** (hamburger menu, other flyouts, panel bodies) and say what disambiguates the visible one (ClassName, the parent hover).
+4. Act like the user would (`browser_click`, `browser_type`, `browser_select_option`, hover for menus). Keep the user's real path: no direct URL jumps they didn't make. Note every action that loads a new page: the Tosca step after it needs a settle step.
 5. At each verification point, record the property and the expected value (`Visible`, `InnerText`, value).
 6. Note dynamic data (order numbers, dates) to **buffer**, and anything that needs waits (SPA loads, spinners).
 
@@ -49,6 +53,6 @@ Url: https://shop.example.com/login* | Title: Login – Example Shop
 | 3 | Account link | Tag=A, InnerText=*@*.* | 1 ✓ | — | Visible=True |
 ```
 
-Known traps and proven patterns (consent banners, duplicate nav labels, hover-only menus, relative href, line-broken headings, breakpoints, bot protection): [references/web-patterns.md](references/web-patterns.md).
+Known traps and proven patterns (consent banners, duplicate nav labels, hover-only menus, full-string ClassName, collapsed elements, settle after navigation, relative href, line-broken headings, breakpoints, bot protection): [references/web-patterns.md](references/web-patterns.md).
 
 Hand the inventory to the builder (`commander-mcp` for Commander; `tosca-authoring-automated-testcase` / `toscacloud-cli` for Cloud). Module JSON details, action modes, the 4-folder case layout and debugging for the Html engine: `toscacloud-cli` → [web-automation.md](../toscacloud-cli/references/web-automation.md) and [best-practices.md](../toscacloud-cli/references/best-practices.md). The TechnicalId concepts are the same in Commander XModules.

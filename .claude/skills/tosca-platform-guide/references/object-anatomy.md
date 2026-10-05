@@ -27,7 +27,7 @@ MODULE 'Shop | Order History | Orders table'            ← name: App | Area | W
   BusinessType = HtmlDocument, InterfaceType = GUI
   parameters
     Engine = Html                    [Configuration]    ← mandatory on the module and on every attribute
-    Title  = 'Shop - Orders*'        [TechnicalId]      ← identifies the PAGE (browser tab); add Url = 'https://host*' if titles clash
+    Title  = 'Shop - Orders*'        [TechnicalId]      ← identifies the PAGE (browser tab); wildcarded, never the exact title (`*` only when the case guarantees one app tab); add Url = 'https://host*' if titles clash
     ControlFramework = None          [Steering]
   attributes (tree)
     'Page title'            GenericGUI   Tag=H1                                            [TechnicalId]
@@ -64,6 +64,8 @@ What makes a module good:
 - **TechnicalId values can be dynamic**: wildcards (`Shop - Orders*`), `{REGEX["a|b"]}` for variants, and buffers (`ConstraintIndex = {B[RowNo]}`) so a step chooses the element at run time.
 - **Tables** expose `<Row>` / `<Col>` / `<Cell>` placeholders instead of one attribute per cell. If the page isn't a real table, scanned modules model rows as nested containers with `ConstraintIndex`; mark index-based locators as fragile.
 - **Attribute defaults** carry intent: `DefaultActionMode` Input for controls, Select for containers, Verify for read-only texts; `DefaultDataType` Password for secrets; `ValueRange` for the allowed values (`X`, `{CLICK}`, `True;False`).
+- **Every Html control attribute also carries `Engine = Html` and `BusinessAssociation = Descendants` as Configuration params** (not shown per attribute above; table placeholders use `Rows` / `Columns` / `Cells`). Same on Commander and Cloud. Scans add them; hand-built attributes need them explicitly ([commander-field-notes.md](commander-field-notes.md) §3).
+- `ClassName` is the element's full class string with wildcards for dynamic tokens, never a single token picked from a visual read.
 - Module attributes come from a scan (XScan / Cloud scanner) or from the explorer's verified inventory. Never invent a locator.
 
 ## 3. A test case, complete

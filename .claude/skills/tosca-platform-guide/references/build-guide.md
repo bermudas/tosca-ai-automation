@@ -60,19 +60,19 @@ Invariants to check on every write:
 | Add step from module | At creation: `create_test_case` `steps=[{moduleId, action, values}]`. Later: `execute_drop_task(target=testCase, sources=[module])` | `Mark` module(s) → `JumpToNode` case → `DropMarked` | `CreateXTestStepFromXModule(module)` (whether values are pre-created: u) | `…/task/CreateXTestStepFromXModule?objToDrop={module}` (u) |
 | Add value for an attribute | `execute_drop_task(target=step, sources=[attribute])` | ? | `step.CreateXTestStepValue(attr)`; `APICreateValuesFromDefaultForXTestStep()` for API | ? |
 | Set Value / ActionMode / DataType / Operator | `set_attribute(identifier, Value \| ActionMode \| DataType \| Operator \| Condition, value)`. Set Operator **last** (changing ActionMode resets it) | `JumpToNode <value>` → `set Value "…"`, `set ActionMode "…"` | `$v.Value`, `$v.ActionMode = 'Verify'`, `$v.DataType`, `$v.Operator` (last) | ? (`PUT …/object/{id}` body unverified: edit with TCAPI / TCShell instead) |
-| ActionProperty | ? (`set_attribute` if `get_attributes` lists it as writable) | ? (`set ActionProperty`) | `$v.ActionProperty = 'Visible'` | ? |
+| ActionProperty | `set_attribute(<valueId>, "ActionProperty", "Exists")` (used 2026-09, 26.1) | ? (`set ActionProperty`) | `$v.ActionProperty = 'Visible'` | ? |
 | Nested value / ExplicitName (P3, P4) | ? (child drop and a writable `ExplicitName` are both undocumented) | ? | `$parent.CreateXTestStepValue($childAttr)`, walk `SubValues`; ExplicitName = `Name` or `SetAttibuteValue('ExplicitName', …)` (u) | ? |
 | Buffer (P2, P3) | Value: `set_attribute` `ActionMode=Buffer`, `Value=<name>`. Read it with `{B[name]}` | as "Set Value" | as "Set Value"; `TBox Set Buffer` `<Buffername>` + ExplicitName | ? |
-| Block call + parameter values (P11) | ? (not documented; `execute_drop_task` block → folder has not been tested) | ? | `CreateTestStepFolderReference(block)` → `ParameterLayerReference` / `CreateParameterLayerReference()` → `AllParameterReferences[].Value` (whether references are created automatically: u) | `…/task/CreateTestStepFolderReference?objToDrop={block}` (u); parameter values ? |
+| Block call + parameter values (P11) | `execute_drop_task(copy=true, sourceIds=[<existing reference or block>], targetId=<folder>)` → live reference (verified 2026-10, 26.1). Parameter values: `set_attribute` on the `ParameterReference`; a fresh reference may hold a virtual placeholder that only the UI can materialize: copy an instance whose value is already set ([commander-field-notes.md](commander-field-notes.md) §7) | ? | `CreateTestStepFolderReference(block)` → `ParameterLayerReference` / `CreateParameterLayerReference()` → `AllParameterReferences[].Value` (whether references are created automatically: u) | `…/task/CreateTestStepFolderReference?objToDrop={block}` (u); parameter values ? |
 | Create block + parameters | ? (GUI action "Create Reuseable TestStepBlock": check `list_available_tasks`) | ? | `TestStepLibrary.CreateReusableTestStepBlock()` / `CreateReusableTestStepBlockAndReferenceIt(objs)`; `CreateBusinessParameterContainer().CreateParameter()` | ? |
-| If / While / Do (P7) | `execute_task` IF / WHILE / DO on the test case (names from `list_available_tasks`) | ? | `CreateIFStatement()` → `Condition`, `ConditionPassedFolder`, `CreateELSEStatement()`; `CreateWHILEStatement()` / `CreateDOStatement()` + `MaximumRepetitions` (loop-body folder: u) | ? |
+| If / While / Do (P7) | `execute_task` IF / WHILE / DO on the test case (names from `list_available_tasks`); condition = drop the module onto the `Condition` folder and set a Verify value ([commander-field-notes.md](commander-field-notes.md) §5) | ? | `CreateIFStatement()` → `Condition`, `ConditionPassedFolder`, `CreateELSEStatement()`; `CreateWHILEStatement()` / `CreateDOStatement()` + `MaximumRepetitions` (loop-body folder: u) | ? |
 | Recovery / CleanUp (P1) | ? | ? | `TestCase.CreateRecoveryScenarioCollection()`; scenario creation ? | ? |
 | TCP (P1, P8) | ? | ? | `TestConfigurationHelper.SetTestConfigurationParameterValue(obj, name, value)` (whether it creates a new TCP: u) | ? |
-| Module | UI: **don't scan**, report the gap (XScan in the UI only). API: `create_api_module(name, path)` | `task "Create XModule"` (empty; XScan in the UI) | `TCFolder.CreateXModule()`; attribute creation ? | ? |
+| Module | UI: no scanning through MCP: ask for an XScan, or hand-author from a verified inventory with the required envelope (`InterfaceType=GUI`, `BusinessType=HtmlDocument`, `Engine` + `BusinessAssociation` Configuration params on every attribute via `execute_task("Configuration Param")`: [commander-field-notes.md](commander-field-notes.md) §3). API: `create_api_module(name, path)` | `task "Create XModule"` (empty; XScan in the UI) | `TCFolder.CreateXModule()`; attribute creation ? | ? |
 | ExecutionList + entry (P10) | ? (`execute_task` / `execute_drop_task` case → list, not documented) | `task "Create ExecutionList"`; add entry ? | `CreateExecutionList([objToDrop])`, `ExecutionList.CreateExecutionEntry(tc)` | `…/task/CreateExecutionList`, `…/task/CreateExecutionEntry?objToDrop=` (u) |
-| Run | `execute_test_suite(identifier)` (+ `isValidationRun=true` = ScratchBook) → poll `execute_test_suite_status(jobId)`. One run at a time | `task "Run"` on the ExecutionList / entry | `ExecutionList.Run()` | `…/object/{eventId}/task/ExecuteNow` (execution tasks are off by default); Execution API `POST /Execution/Enqueue` |
+| Run | `execute_test_suite(isValidationRun=true, testCaseId=<surrogate id>)` (ScratchBook; pass the explicit surrogate id or the result has no per-step log) → poll `execute_test_suite_status(jobId)`. One run at a time | `task "Run"` on the ExecutionList / entry | `ExecutionList.Run()` | `…/object/{eventId}/task/ExecuteNow` (execution tasks are off by default); Execution API `POST /Execution/Enqueue` |
 | Read back | `get_object_info` (tree) + `get_attributes` (small batches); `set_attribute` returns the read-back value | `print`, `get <attr>` | `GetTCObject(id)`, `Items` → `TestStepValues` → `Value` / `ActionMode`; `GetAttributeValue`; Export Subset → `tosca-tsu` | `GET …/object/{id}`, `…/association/{Items \| TestStepValues}` (association names: u) |
-| Persist | `save_workspace`; `check_in_all` (after the user confirms) | `save` (**required** in batch mode); `checkinall` | `Save()` / `Save-TcApiWorkspace`; `CheckInAll(comment)` | `…/task/CheckInAll?checkInComment=`; save ? |
+| Persist | `save_workspace` after every group of mutations (unsaved work is lost with the session); `check_in_all` only at the end and after the user confirms: it clears the last run's step log | `save` (**required** in batch mode); `checkinall` | `Save()` / `Save-TcApiWorkspace`; `CheckInAll(comment)` | `…/task/CheckInAll?checkInComment=`; save ? |
 
 Sources: `commander-mcp` → `reference/tools-catalog.md`, `reference/workflows/author-automated-test-case.md`, `create-test-case.md`, `add-step-to-existing-test-case.md`, `execute-task.md`, `workspace-orchestration.md`. `cli-api-commander` → `reference/tasks.md`, `reference/commands.md`, `reference/workflows/*.md`. TCAPI and REST: [commander-authoring-apis.md](commander-authoring-apis.md) §2–§3.
 
@@ -117,7 +117,7 @@ execute_drop_task(target=<caseOrFolder>, sources=[<moduleId>])        # append a
 execute_drop_task(target=<stepId>, sources=[<attributeId>])           # add a value to it
 set_attribute(<valueId>, "ActionMode", "Verify"); set_attribute(<valueId>, "Value", "…")
 execute_task(<IF task from list_available_tasks>, objectIds=[<case>]) # only for P7
-execute_test_suite(<case>, isValidationRun=true) → execute_test_suite_status(jobId)
+execute_test_suite(isValidationRun=true, testCaseId=<surrogate id>) → execute_test_suite_status(jobId)
 save_workspace                                        # check_in_all only after the user confirms
 ```
 
@@ -164,7 +164,7 @@ Cloud, official path (`tosca-authoring-automated-testcase`): run `toscactl asset
 
 ## 4. Build rules / quality gates
 
-Check these before the first run, and again before you report.
+Check these before the first run, and again before you report. Gates sourced from field notes (G5a, G8a, G8b, G17a, and the field-note parts of G5, G13, G24) reflect what has worked so far: if you prove a better way, follow it and update the gate and [commander-field-notes.md](commander-field-notes.md). G19 (no defect masking) and G25 (confirm destructive actions) are fixed.
 
 **Structure**
 - [ ] G1. The case follows the team convention from the reuse scan. Otherwise use P1: Precondition → Process → Verification → Postcondition, plus a CleanUp scenario ([test-patterns.md](test-patterns.md) P1; [commander-object-model.md](commander-object-model.md) §4.2, §10).
@@ -173,17 +173,24 @@ Check these before the first run, and again before you report.
 
 **Modules and locators**
 - [ ] G4. Every locator is unique (proved live with a count of 1) and stable. Prefer `Id` / a test-ID attribute (`attributes_data-test-id`) over `ClassName` / `InnerText`. Never use `style_*`, `OuterHtml` or `attributes_ng-reflect-*` as the primary identifier (P9; `toscacloud-cli` SKILL.md "TechnicalId priority"; `web-exploration`, `sap-gui-exploration`).
-- [ ] G5. The module root has `Engine`. On Cloud, every Html attribute also has `Engine` + `BusinessAssociation`, and root `Url` / `Title` are `TechnicalId` (`web-automation.md` "Module structure", "Attribute anatomy").
+- [ ] G5. The module root has `Engine`. Every Html control attribute also has `Engine` + `BusinessAssociation = Descendants` (table children: `Rows` / `Columns` / `Cells`) as **Configuration** params, on Commander as on Cloud. Root `Url` / `Title` are `TechnicalId`, wildcarded, never an exact title (`*` only when the case guarantees one app tab; otherwise `*App*` / `Url=https://host*`). Hand-built Commander modules: `InterfaceType=GUI`, `BusinessType=HtmlDocument` on the root, a semantic `BusinessType` per attribute (`web-automation.md` "Module structure", "Attribute anatomy"; [commander-field-notes.md](commander-field-notes.md) §3).
+- [ ] G5a. `ClassName` holds the element's **full** class string (wildcard dynamic tokens), not one token picked visually. `HREF` only as an absolute URL ([commander-field-notes.md](commander-field-notes.md) §4).
 - [ ] G6. A module covers one screen area with ≤~20 controls, and attribute order matches the flow. Never delete a used module and rebuild it: rescan it or fix it (object model §3.5).
 - [ ] G7. Reuse Standard modules / packages before you build a wrapper (object model §7; `standard-modules.md`).
 
 **Values and data**
-- [ ] G8. Use WaitOn on `Exists` / `Visible` / `InnerText`, not `TBox Wait` / `Timing.Wait`. A static wait is only for teardown settling or the documented SPA bootstrap (P12; `field-notes.md`).
+- [ ] G8. Use WaitOn on `Exists` / `Visible` / `InnerText`, not `TBox Wait` / `Timing.Wait`. A static wait is only for teardown settling, the documented SPA bootstrap, or settling after `OpenUrl` / a navigating click when no WaitOn target or shared wait block exists (P12; `field-notes.md`).
+- [ ] G8a. Every action that loads a new page is followed by a settle step before the next search or verify. Without it the engine throws transient pipe / busy-tab errors, not a clean "not found" ([commander-field-notes.md](commander-field-notes.md) §1).
+- [ ] G8b. Verify `Visible` only on elements that are actually rendered; collapsed-by-default elements get `Exists` (check computed style during exploration).
+- [ ] G8c. Every `Input` into an SPA form field is followed by a Verify of the same value (P13). No `UserSimulation` steering unless proven necessary on the live page; `FireEvent=change` is what sets SPA inputs.
+- [ ] G8d. A mid-test `OpenUrl` isn't hash-identical to the current URL (silent no-op) and is followed by a freshness / WaitOn guard: `OpenUrl` returns before the page loads. Re-authenticate after a reload if the app keeps its session in memory.
+- [ ] G8e. Modules are tab-scoped: module-level `Url=https://host*` whenever more than one tab of the app can be open or the app is a single-title SPA (`web-patterns.md` "Engine traps").
+- [ ] G8f. Account-scoped state the test changes (cart, drafts) is reset in its own Precondition folder with a Verify that it's clean (P3a).
 - [ ] G9. Each buffer is named, set once, and read later with `{B[..]}`. Nothing buffered goes unused (P2, P3).
 - [ ] G10. Environment values and credentials come from TCPs (`{CP[..]}`). No literal secrets. Passwords are Password-type only (P1, P5; `web-automation.md` "Password fields").
 - [ ] G11. Records the test creates get generated unique data (`{RANDOMTEXT}`, a timestamp) (P3).
 - [ ] G12. Use Constraint to pick a row, not a loop (P4).
-- [ ] G13. Use `X` for clicks. `{CLICK}` / `{SENDKEYS}` only when the direct form fails. No `{SCRIPT}` / `{XP}` on Cloud (object model §6).
+- [ ] G13. Use `X` for clicks. `{CLICK}` / `{SENDKEYS}` only when the direct form fails. Never chain `{MOUSEOVER};{CLICK}` in one value before a navigation: hover the parent in its own step, then `X`-click the child. No `{SCRIPT}` / `{XP}` on Cloud (object model §6).
 
 **Reuse**
 - [ ] G14. Create a block only for steps reused across several cases, and give it business parameters. Within one case, use `Repetition` instead (P11; object model §8).
@@ -191,7 +198,8 @@ Check these before the first run, and again before you report.
 - [ ] G16. Cloud block call: `parameterLayerId` copied verbatim (absent when there are no parameters), a real `referencedParameterId`, and parameter names copied byte-for-byte (`blocks.md`).
 
 **Control flow and integrity**
-- [ ] G17. Use If only for optional elements (banners, pop-ups, leftover tabs), with a Verify condition. Never use it as a retry, and never around a business Verify (P7).
+- [ ] G17. Use If only for optional elements (banners, pop-ups, leftover tabs), with a Verify step **inside** the `Condition` folder (not a Buffer step before the If). Never use it as a retry, and never around a business Verify (P7).
+- [ ] G17a. The case can run twice in a row: it starts from a clean browser without a bare `CloseBrowser` first step, which fails when no browser is running (Commander: `HtmlEngineExtensionHelper failed`; Cloud: `UnestablishedConnectionException`). Use the team's force-close + open block, an If-wrapped `CloseBrowser Title="*<App>*"`, or `OpenUrl` first and `CloseBrowser` in Postcondition.
 - [ ] G18. Every While / Do has `MaximumRepetitions` (5–20) (P7; object model §9).
 - [ ] G19. **No defect masking**: never remove, weaken, disable or If-wrap a Verify to get green. No recovery that dismisses the error under test (`toscacloud-cli` SKILL.md "No-defect-masking rule").
 - [ ] G20. Don't edit template instances: change the template or the TestSheet and reinstantiate (P8; object model §11).
@@ -200,14 +208,14 @@ Check these before the first run, and again before you report.
 **Process**
 - [ ] G22. One artifact at a time: build → re-read (§5) → run → fix → re-run.
 - [ ] G23. Re-read after **every** write. A `✓`, a 204 or `{}` is not proof.
-- [ ] G24. Commander: `save` after each group of mutations. Check in only after the user confirms. Note that MCP `create_test_case` checks in by itself in multi-user workspaces (§6).
+- [ ] G24. Commander only (Cloud has no checkout / check-in / save: G23's version check is the whole persistence story). `save` after each group of mutations. In multi-user workspaces keep objects checked out through the whole build → run → fix loop: check-in / checkout clears the last run's per-step log. Check in only at the end, after the user confirms (or let them do it). Note that MCP `create_test_case` checks in by itself in multi-user workspaces (§6).
 - [ ] G25. Deletes, force overwrites and SAP save / post need explicit user confirmation.
 
 ## 5. Verification per runtime
 
 | Runtime | Read back | Compare | Validate by running |
 |---------|-----------|---------|---------------------|
-| Commander MCP | `get_object_info(<case>, include_parent_and_children=true)`, then `get_attributes` on steps / values in small batches | Tree order, module per step, `Value` / `ActionMode` / `Operator` / `DataType` per value. `set_attribute` returns `old_value` + read-back | `execute_test_suite(isValidationRun=true)` → `execute_test_suite_status` until `IsRunning=false`. Recovery runs only in an ExecutionList |
+| Commander MCP | `get_object_info(<case>, include_parent_and_children=true)`, then `get_attributes` on steps / values in small batches | Tree order, module per step, `Value` / `ActionMode` / `Operator` / `DataType` per value. `set_attribute` returns `old_value` + read-back | `execute_test_suite(isValidationRun=true, testCaseId=<surrogate id>)` → `execute_test_suite_status` until `IsRunning=false`. Recovery runs only in an ExecutionList |
 | TCShell | `JumpToNode <path>` → `print` / `get <attr>` | Name, path, attributes after each `set` | `task "Run"` on an ExecutionList, then `save` |
 | TCAPI | After `Save()`: `GetTCObject($tc.UniqueId)` / `Search`, print `Items` → `TestStepValues` → `Value` / `ActionMode` / `Operator`. Offline: Export Subset → `tosca-tsu` tree | The build plan against the printed tree. Compare ExplicitName with a value created in the GUI | ScratchBook / `ExecutionList.Run()` |
 | Tosca REST | `GET …/object/{id}` (`Attributes`), `…/association/Items` | Attributes against the plan; `CheckOutState` | Execution API `Enqueue` → `Status` → `Results` |
@@ -219,7 +227,7 @@ Check these before the first run, and again before you report.
 
 | Runtime | Can't do (authoring) | Next tier |
 |---------|----------------------|-----------|
-| Commander MCP | No search / TQL. No UI scanning. Block calls, block creation, recovery, TCPs, ExecutionLists and nested values aren't documented. `create_test_case` takes steps **only at creation** and checks in by itself in multi-user workspaces | Undocumented operation: try it via `list_available_tasks` on a scratch object, or close Commander → TCAPI. Search: walk the tree, or TCShell / TCAPI with Commander closed |
+| Commander MCP | No search / TQL. No UI scanning. Block creation, recovery, TCPs, ExecutionLists and nested values aren't documented (block calls work by copying a reference, [commander-field-notes.md](commander-field-notes.md) §7). `create_test_case` takes steps **only at creation** and checks in by itself in multi-user workspaces | Undocumented operation: try it via `list_available_tasks` on a scratch object, or close Commander → TCAPI. Search: walk the tree, or TCShell / TCAPI with Commander closed |
 | TCShell | No typed nested values, block wiring, control flow or TCPs. Tasks don't prompt for names, so `set Name` after each create. Can't open a workspace Commander has locked | TCAPI. Commander open: MCP, or Remote Control with consent |
 | TCAPI | Needs Commander installed plus a license, and an unlocked `.tws`. Several members are unverified ([commander-authoring-apis.md](commander-authoring-apis.md) §5). No UI scanning | REST for remote read / checkout. Scan in the Commander UI |
 | Tosca REST | Attribute writes and create bodies are unverified. Execution tasks are off by default since 2024.1 | Values via TCAPI / TCShell. Runs via the Execution API |
@@ -228,6 +236,6 @@ Check these before the first run, and again before you report.
 | `tosca_cli.py` | Can't create a new block or a While loop (not documented). No `blocks update` command. No Password tokens (Portal). No deletes with the service role (403). Personal agents return 403. No TestSheet / template authoring | Portal UI (block creation, secrets, deletes, templates), then continue by JSON. Runs on MCP |
 | Cloud templates / TestSheets | Objects exist, but no authoring tooling in this repo | Ask the user. Fall back to data sets + block parameters (P8) |
 
-A `?` or `(u)` cell you verify on a real workspace or tenant becomes a fact: replace it here, with the version it was seen on. An object that doesn't work although the call succeeded: [compare-with-reference.md](compare-with-reference.md).
+A `?` or `(u)` cell you verify on a real workspace or tenant becomes a fact: replace it here, with the version it was seen on. An object that doesn't work although the call succeeded: [compare-with-reference.md](compare-with-reference.md); engine message → cause table: [commander-field-notes.md](commander-field-notes.md) §1.
 
 When you escalate, say which tier you used and why ("Cloud MCP has no append-step tool → `cases insert-step`").

@@ -25,10 +25,10 @@ You explore application scenarios for Tosca test automation. You **observe and r
    - SAP GUI → `sap-gui-exploration` skill with the `sap-gui` MCP. If the server isn't available (it needs Windows with SAP GUI scripting), or the user prefers another one, list the options from `sap-gui-exploration/references/mcp-server-options.md` and let them choose. Don't pick silently.
    - SAP GUI for HTML / Fiori → treat as web.
 2. **Walk the scenario exactly as a user would**, screen by screen. Before each action, capture the window/page identity and the controls involved. After it, capture what changed.
-3. **Prove every locator**: exactly one match and visible in the viewport (web), or a scripting ID read from the live screen (SAP). Never guess.
+3. **Prove every locator**: exactly one match and visible in the viewport (web), or a scripting ID read from the live screen (SAP). Never guess. Web: record `ClassName` as the full class string, count hidden copies (hamburger, other flyouts, panel bodies) and name the parent hover that scopes the element, and check computed visibility so the builder knows `Visible` vs `Exists` (`web-patterns.md`).
 4. **Record verification points** with the property and expected value, and mark **dynamic values** to buffer.
 5. **Never** submit, save or post irreversible business transactions (SAP `F11`/Post, web "Place order" on production) without explicit approval. Stop and ask.
-6. Leave the application where you found it (log out only if you logged in).
+6. Leave the application where you found it (log out only if you logged in). Don't explore logged in **as the test account** if the scenario changes account-scoped state (cart, drafts): it poisons the next run. Use another account, stay logged out, or clean up and say so.
 
 ## Output
 
@@ -36,6 +36,6 @@ Return only the inventory, in the formats defined in the two skills:
 
 - Short header: target, platform (web / SAP GUI), MCP server used, preconditions (user role, test data).
 - One table per page/screen: identity (Url+Title, or Transaction+Program+Screen), the existing module if any, and per element: label, raw ID from the MCP, Tosca TechnicalIds / RelativeId, status (existing ✓ / existing ✗ / new), action + value, verify.
-- **Build hints** for the builder, keyed to `tosca-platform-guide` → `test-patterns.md`: what to **WaitOn** after each action (element + property, P12); **optional** popups/banners (If, P7); tables/lists where a row must be picked **by content** and its key column (Constraint, P4); values to **buffer** and where they're reused (P2); step sequences that repeat across the scenario or match an existing block (block with business parameters, P11); stable test-ID attributes available (`data-test-id` etc. → `attributes_<attr>`, P9).
+- **Build hints** for the builder, keyed to `tosca-platform-guide` → `test-patterns.md`: what to **WaitOn** after each action (element + property, P12), and every action that loads a new page (needs a settle step); **optional** popups/banners (If, P7); tables/lists where a row must be picked **by content** and its key column (Constraint, P4); values to **buffer** and where they're reused (P2); step sequences that repeat across the scenario or match an existing block (block with business parameters, P11); stable test-ID attributes available (`data-test-id` etc. → `attributes_<attr>`, P9).
 - Suggested `.agents/apps/<app>.md` updates: new or changed locators, traps, breakpoints, popups (the caller or you write them; see `.agents/README.md`).
 - Open issues: ambiguous elements, flaky timing, popups that appear only sometimes, defects observed in the application (report them; don't work around them).

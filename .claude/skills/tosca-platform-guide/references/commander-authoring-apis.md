@@ -91,7 +91,7 @@ if (-not $v) { $attr = $module.Search('=>SUBPARTS:XModuleAttribute[Name=="Custom
 $v.Value = 'ACME'; $v.ActionMode = 'Input'
 
 $v = Get-Val $step 'Order number'; $v.Value = 'OrderNo'; $v.ActionMode = 'Buffer'          # P2: value = buffer NAME
-$v = Get-Val $step 'Save';         $v.Value = '{CLICK}'; $v.ActionMode = 'Input'
+$v = Get-Val $step 'Save';         $v.Value = 'X';       $v.ActionMode = 'Input'
 
 $chk = $ver.CreateXTestStepFromXModule($module); $chk.Name = 'Status saved'
 $v = Get-Val $chk 'Status'; $v.ActionMode = 'Verify'; $v.Operator = 'Equals'; $v.Value = 'Saved'
@@ -123,7 +123,7 @@ $if = $proc.CreateIFStatement()
 $c  = $if.Condition.CreateXTestStepFromXModule($bannerModule)
 $v  = Get-Val $c 'Accept'; $v.ActionMode = 'Verify'; $v.ActionProperty = 'Visible'; $v.Value = 'True'
 $t  = $if.ConditionPassedFolder.CreateXTestStepFromXModule($bannerModule)
-$v  = Get-Val $t 'Accept'; $v.Value = '{CLICK}'; $v.ActionMode = 'Input'
+$v  = Get-Val $t 'Accept'; $v.Value = 'X';       $v.ActionMode = 'Input'
 # optional: $else = $if.CreateELSEStatement()
 ```
 

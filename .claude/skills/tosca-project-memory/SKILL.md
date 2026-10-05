@@ -87,9 +87,10 @@ Trigger: the user shares hints or rules ("remember…", "we always…", "a good 
 Trigger: a built module or test case didn't work until it was compared with a working reference (`tosca-platform-guide` → `compare-with-reference.md`), or a runtime behaved differently from the skill docs.
 
 1. **Split the lesson**: Tosca-product behavior (same on every project) vs this project's way (which module to copy, this tenant's quirk).
-2. **Product behavior → the skill**, not `.agents/`: `toscacloud-cli` caveats / `field-notes.md`, `commander-object-model.md`, `commander-authoring-apis.md`, or a verified `?` / `(u)` cell in `build-guide.md`. Propose the edit to the user when the file is vendored from upstream.
-3. **Project way → `.agents/apps/<app>.md`** under *Reference objects*: the known-good module and case per page (ids / paths) and what to copy from them, plus one-line "tried X → failed Y → fixed Z" entries. Conventions → `project.md`; recipes proven on more than one app → `patterns/`.
-4. Label (`verified <date>`), update instead of duplicating, and mention it in the report.
+2. **Product behavior → the skill**, not `.agents/`: `toscacloud-cli` caveats / `field-notes.md`, `commander-field-notes.md` (Commander engine errors and MCP behavior), `commander-object-model.md`, `commander-authoring-apis.md`, or a verified `?` / `(u)` cell in `build-guide.md`. Propose the edit to the user when the file is vendored from upstream.
+3. **Ids only after they're proven.** Record an id after `save_workspace` / a GET shows it persisted, and with its **type** checked (`get_object_info`): a block reference instance is not the master block. Ids from an earlier session are hints until re-read. Rules the user restates or corrects: update the one entry in place, keep the latest wording, and drop the superseded variant (don't stack "reinforced / corrected" notes).
+4. **Project way → `.agents/apps/<app>.md`** under *Reference objects*: the known-good module and case per page (ids / paths) and what to copy from them, plus one-line "tried X → failed Y → fixed Z" entries. Conventions → `project.md`; recipes proven on more than one app → `patterns/`.
+5. Label (`verified <date>`), update instead of duplicating, and mention it in the report.
 
 ## Pattern entry format
 

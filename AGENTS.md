@@ -15,7 +15,7 @@ Skills, agents and MCP servers for automating **Tricentis Tosca Commander** (on-
 
 | Area | Skills |
 |------|--------|
-| Routing & concepts | `tosca-platform-guide` (incl. `object-anatomy.md`: what a module / test case / block looks like, both platforms; `build-guide.md`: object → call per runtime + quality gates; `compare-with-reference.md`: diff a failing build against a working object, then record the lesson; `test-patterns.md`: build patterns for both platforms; `commander-object-model.md`: Commander object shapes + official design rules; `commander-authoring-apis.md`: TCAPI / REST authoring when MCP isn't available) |
+| Routing & concepts | `tosca-platform-guide` (incl. `object-anatomy.md`: what a module / test case / block looks like, both platforms; `build-guide.md`: object → call per runtime + quality gates; `compare-with-reference.md`: diff a failing build against a working object, then record the lesson; `commander-field-notes.md`: lessons learned in real sessions (engine error → cause → fix, hand-built module envelope, Commander MCP session discipline; scoped per platform, revised as better ways are found); `test-patterns.md`: build patterns for both platforms; `commander-object-model.md`: Commander object shapes + official design rules; `commander-authoring-apis.md`: TCAPI / REST authoring when MCP isn't available) |
 | Project memory | `tosca-project-memory` (onboard the user's setup, learn conventions from existing assets, capture expert patterns into `.agents/`) |
 | Exploration | `web-exploration` (Playwright MCP), `browser-verify` (CDP deep checks), `sap-gui-exploration` (SAP GUI MCP + server options) |
 | Commander, open (MCP) | `commander-mcp` |

@@ -84,6 +84,14 @@ STEP 'Prepare data' -> TBox Set Buffer
 - **Cloud:** use the Buffer operations standard module (`web-automation.md` "Buffer write step"). `{CALC}` and `{SCRIPT}` aren't available on Cloud; use `{MATH}` and the string operations instead (`toscacloud-cli` SKILL.md "Dynamic expressions"; Cloud column of [commander-object-model.md](commander-object-model.md) §6).
 - Prefer generated unique data (`{RANDOMTEXT}`, a timestamp) for records the test creates, so reruns don't collide.
 
+## P3a. Reset shared server-side state before the flow
+
+Use when the test changes **account-scoped state** (cart, saved profile, drafts, favourites) that survives the run.
+
+- A failed run leaves state behind and poisons the next run (`Expected "2" / Actual "6"`). Your own exploration, logged in **as the test account**, does the same: explore logged out or with another account, or clean up after.
+- Put the reset in **its own folder right after login**, before the process under test: navigate with the app's own controls, empty / restore the state, then **Verify it is clean**, so a failed reset fails there and not three steps later.
+- This is precondition setup, not defect masking: every assertion of the journey stays.
+
 ## P4. Pick one row / list item by content (Constraint), then act on it
 
 Use for tables, grids, JSON arrays and SAP tables whenever the row position isn't fixed. **Don't** loop over rows.
@@ -162,11 +170,13 @@ Use only for things that **may or may not** appear: cookie or consent banners, "
 
 ```
 If
-  Condition   STEP 'Banner shown?' -> Cookie Banner   Accept.Visible = 'True' [Verify]
+  Condition   STEP 'Banner shown?' -> Cookie Banner   Accept.Exists  = 'True' [Verify]
   Then        STEP 'Accept'        -> Cookie Banner   Accept = 'X'            [Input]
 ```
 
 - A failing condition Verify only selects the branch; it doesn't fail the test. A wildcard Verify (`*-*`) is the "contains" idiom.
+- Mirror form, verified on Commander: Condition `Accept.Exists = 'False'` [Verify], empty Then, Else = click `X`. Either way the Verify sits **inside** `Condition`; a Buffer step before the If doesn't work.
+- For a banner that is absent, `Exists` is the safer property than `Visible`.
 - **Never** wrap a business Verify in an If to get past a failure: that's defect masking (`toscacloud-cli` SKILL.md). Don't use If/Else as a blind retry of a failed action ("First try / Second try"): fix the wait (P12) instead. A state-checked repeat is fine ("dialog still visible → click Save again", `toscacloud-cli` → `pdf-modules.md`).
 - Else is a third folder; name folders clearly, but tools read their type, not their name.
 - Loops: prefer `Repetition` or Constraint (P4). When a loop is unavoidable (polling a status, iterating a buffered array), use a While with a Verify condition and always set `MaximumRepetitions` (5–20 in real projects) so it can't spin forever.
@@ -242,7 +252,8 @@ TestCase:  CALL 'Login'   URL = '{CP[URL]}'   User = '{CP[UserName]}'   Password
 - Inside the block, use `{PL[Name]}` as the whole value (Input, Insert) or inside a Verify string. No dots in parameter names.
 - At the call site pass `{CP[x]}` for environment and credentials, `{B[x]}` for values produced earlier in the case, literals for test data, and `{XL[..]}` in templates (P8).
 - Each call stores only the parameters it sets. Check every call site before renaming or removing a parameter (`tosca-tsu` → `tsu-schema.md` §4 lists the traversal).
-- Commander: block in a TestStepLibrary, parameters under "Business Parameters", call = TestStepFolderReference ([commander-object-model.md](commander-object-model.md) §8; TCAPI `CreateTestStepFolderReference` in [commander-authoring-apis.md](commander-authoring-apis.md)). Cloud: `toscacloud-cli` → `blocks.md` (ULID wiring, `parameterLayerId` copied verbatim).
+- Commander: block in a TestStepLibrary, parameters under "Business Parameters", call = TestStepFolderReference ([commander-object-model.md](commander-object-model.md) §8; TCAPI `CreateTestStepFolderReference` in [commander-authoring-apis.md](commander-authoring-apis.md); Commander MCP: copy an existing reference with `execute_drop_task(copy=true)` and keep it live, [commander-field-notes.md](commander-field-notes.md) §7).
+- Typical team block: **force-close + open browser** with the URL as a business parameter, as the mandatory first Precondition item. It's idempotent, so repeated runs start clean and the Postcondition needs no `CloseBrowser`. Find it in the reuse scan before building an `OpenUrl` / `CloseBrowser` pair. Cloud: `toscacloud-cli` → `blocks.md` (ULID wiring, `parameterLayerId` copied verbatim).
 
 ## P12. Dynamic waits (WaitOn), not static waits
 
@@ -257,6 +268,16 @@ STEP 'Wait for result' -> Results Page
 - WaitOn polls until the property matches or the timeout expires. Real projects use it with `Exists`, `Visible` and `InnerText`.
 - Use `TBox Wait` (a fixed number of ms) only to let a process settle in teardown. Steering params `WaitBefore` / `WaitAfter` on a module attribute cover a whole module at once. The one documented exception is a short fixed wait right after `OpenUrl` for single-page apps that render after load (`toscacloud-cli` → `field-notes.md`).
 - A WaitOn that times out is a real failure signal: report it, don't pad it with longer static waits.
+- **Navigation needs a settle step.** After `OpenUrl` and after any click that loads a new page, put a wait (the team's shared "wait for page to load" block, a WaitOn on the new page, or a short `TBox Wait`) before the next search. Missing it produces transient `busy tab` / `Pipe is broken` / `Invalid buffer length` errors that look like environment flakiness ([commander-field-notes.md](commander-field-notes.md) §1, §5).
+- `WaitOn Visible` can't wait for an element that is collapsed by default; verify `Exists` there.
+- Don't add a wait on suspicion. A `Could not find …` is just as often a wrong state (disabled button, empty field) as a timing problem: prove which before adding a wait (`tosca-automation-engineer` §5 "Probe, don't guess").
+
+## P13. Guards and probes: make silent failures loud
+
+- **Guard every `Input` into an SPA form field with a `Verify` of the same value** on the same attribute. A field that was never written is the most expensive failure: it surfaces downstream as an unrelated `Could not find …`. The guard's `Actual` names the cause: untouched default = never typed (check `UserSimulation`), `""` = cleared not filled, an appended value = the app appends instead of replacing.
+- **Assert-success probe**: `Verify JavaScript Result` (`UseActiveTab=False` + `Title` / `Url` search criteria) whose expected result is the healthy signature. Silent when green, prints the real page state when red, doesn't abort the run. Brace-free JS only.
+- **Document freshness** after any mid-test reload: JS `return (Date.now() - performance.timeOrigin < 20000 ? 'fresh' : 'stale-' + Math.round(Date.now() - performance.timeOrigin));`, expected `fresh`.
+- Keep the guards that caught something; they're cheap and they localize the next failure.
 
 ---
 

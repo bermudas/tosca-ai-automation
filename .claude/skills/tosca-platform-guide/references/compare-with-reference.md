@@ -14,6 +14,8 @@ Switch after **one** failed fix attempt whose cause you can't name, or immediate
 | API accepts the write (200/204) but the object looks different when read back | Server rewrote or dropped fields; a required `metadata` echo or `id` was missing |
 | Block call does nothing with its parameters | Wrong `parameterLayerId` / parameter wiring, or parameter names not byte-identical |
 | It works in the UI when a colleague builds it, not when you do | The UI fills defaults you didn't: that's the diff to find |
+| `Sequence contains more than one element` with unique locators; `No Transition Config defined` | Hand-built Commander module: Configuration params missing or typed as TechnicalId, or `InterfaceType` / `BusinessType` left at defaults ([commander-field-notes.md](commander-field-notes.md) §1, §3) |
+| Locator unique in the browser, 0 matches at run time | `ClassName` holds one token instead of the full class string |
 
 ## 2. Pick a reference
 
